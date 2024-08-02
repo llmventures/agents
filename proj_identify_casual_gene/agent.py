@@ -5,7 +5,8 @@ warnings.filterwarnings('ignore')
 from crewai import Agent, Task
 #creating agents
 #create new column for gene name in gs
-os.environ["OPENAI_API_KEY"] = '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'
+os.environ["OPENAI_API_KEY"] = os.environ.get('OPENAI_API_KEY')
+
 os.environ["OPENAI_MODEL_NAME"] = 'gpt-3.5-turbo'
 
 
