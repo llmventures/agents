@@ -7,10 +7,13 @@ router = routers.DefaultRouter()
 router.register(r'agents', views.AgentView, 'agent')
 router.register(r'crews', views.CrewView, 'crew')
 router.register(r'edges', views.EdgeView, 'edge')
+router.register(r'context', views.ContextBinView, 'contextbin')
+router.register(r'task', views.TaskView, 'task')
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),
-    path('api/get_crew/', views.run_crew, name='get_crew'),
+    path('api/run-crew/', views.run_Crew, name='run-crew'),
     path('api/crew-graphes/', views.save_crewgraph, name = 'crew-graphes')
 ]
