@@ -5,7 +5,7 @@ print(sys.path)
 from urllib.parse import urlparse
 
 from agent_context_classes.Agent import ollama_engine, Agent, util_agent
-from agent_context_classes import KnowledgeBase
+from agent_context_classes.KnowledgeBase import KnowledgeBase
 from datetime import datetime
 from langchain_community.embeddings import HuggingFaceEmbeddings
 import requests

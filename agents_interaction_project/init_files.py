@@ -1,17 +1,15 @@
 import os
 import sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../graphrag_test')))
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/..")
 from langchain_community.embeddings import HuggingFaceEmbeddings
 import json
-from agent_framework.agent_context_classes.KnowledgeBase import instantiate_empty_vector_store
+from agent_context_classes.KnowledgeBase import instantiate_empty_vector_store
 import csv
 import requests
 import django
 
 
 
-##IMPORTANT: ONCE EVERYTHING IS SET UP, ADD TO init_files functionality of 
-#deleting all django db entries as well. However, ADD WARNING TO IT AS WELL
 def init_files(vector_store_path, embedder, starting_date):
     instantiate_empty_vector_store(vector_store_path, embedder)
     dummy_info = {

@@ -11,7 +11,7 @@ import logging
 import io
 from PyPDF2 import PdfReader
 from agent_context_classes.Agent import ollama_engine
-from agent_context_classes import KnowledgeBase
+from agent_context_classes.KnowledgeBase import KnowledgeBase
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
 from langchain_community.embeddings import HuggingFaceEmbeddings
