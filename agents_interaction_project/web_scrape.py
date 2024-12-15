@@ -1,12 +1,8 @@
 import sys
 import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../graphrag_test')))
-from urllib.parse import urlparse
-import pdfplumber
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/..")
 import glob
 import requests
-import subprocess
-import csv
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_experimental.text_splitter import SemanticChunker
 import logging
@@ -14,20 +10,11 @@ import logging
 
 import io
 from PyPDF2 import PdfReader
-from agent_framework.Agent import ollama_engine, Agent, util_agent
-from agent_framework.KnowledgeBase import KnowledgeBase, instantiate_empty_vector_store
-
+from agent_context_classes.Agent import ollama_engine
+from agent_context_classes import KnowledgeBase
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
 from langchain_community.embeddings import HuggingFaceEmbeddings
-
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
-from pdfminer.high_level import extract_text
-import pandas as pd
-
-from bs4 import BeautifulSoup
 import json
 import re
 import requests

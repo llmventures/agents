@@ -3,7 +3,7 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../graphrag_test')))
 from langchain_community.embeddings import HuggingFaceEmbeddings
 import json
-from agent_framework.KnowledgeBase import instantiate_empty_vector_store
+from agent_framework.agent_context_classes.KnowledgeBase import instantiate_empty_vector_store
 import csv
 import requests
 import django
