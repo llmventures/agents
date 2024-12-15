@@ -15,7 +15,7 @@ import uuid
 from sentence_transformers import InputExample
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from agent_framework.Agent import ollama_engine
+from agent_framework.agent_context_classes.Agent import ollama_engine
 from llama_index.core import SimpleDirectoryReader
 from llama_index.core.ingestion import IngestionPipeline
 from llama_index.core.node_parser import TokenTextSplitter

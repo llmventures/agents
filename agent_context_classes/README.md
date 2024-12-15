@@ -1,0 +1,1 @@
+Directory contains Agent, KnowledgeBase, Engine classes utilized by every other project.

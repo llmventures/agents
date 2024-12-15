@@ -13,6 +13,8 @@ from langchain_community.docstore.in_memory import InMemoryDocstore
 from uuid import uuid4
 from datetime import datetime
 
+
+#Defines a conversation between 2 agents. 
 class conversation:
     def __init__(self, engine, agent1, agent2, starting_prompt):
         self,starting_prompt = starting_prompt
@@ -61,7 +63,10 @@ class util_agent:
 
 
 
-
+#Defines a agent. Role, goal, additional info, are text that contribute to a starting prompt
+#Engine specifies the engine used: ie ollama or openai
+#context base stores any context for the agent, ie stored papers. refers to a KnowledgeBase obj(in KnowledgeBase.py). Refer to documentation there
+#memory_base stores conversation info. also refers to a KnowledgeBase obj.
 class Agent:
     def __init__(self, role, goal, additional_info, engine, context_base, memory):
         self.role = role
@@ -74,7 +79,8 @@ class Agent:
         self.memory_base = memory
 
 
-    
+    #given a query, compile relevant context from context_base and memory_base, as well as agent parameters(role, goal, etc)
+    #into a prompt that can be passed to the engine.
     def answer_query(self, query):
         relevant_context = self.context_base.query_knowledge(query, 2)
         relevant_knowledge = self.memory_base.query_knowledge(query, 2)
@@ -94,28 +100,19 @@ class Agent:
         return output, relevant_knowledge, relevant_context, timestamp
 
 
-
-        
-
- 
-
-
-    
-    
-    
-
+#Defines a ollama engine.
 class ollama_engine:
     def __init__(self, model):
         self.model = model
         self.chat_log = []
 
-
+    #Generates a one time answer to a query(response not stored)
     def generate(self, query):
         ollama.pull(self.model)
         response = ollama.generate(model=self.model, prompt=query)
         reply = response['response']
         return reply
-
+    #Generates an answer to a query. Stores the interaction in chat_log.
     def chat(self, query):
         ollama.pull(self.model)
         response = ollama.chat(model=self.model, messages=self.chat_log + [{"role": "user", "content": query}])

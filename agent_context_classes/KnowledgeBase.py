@@ -13,6 +13,14 @@ from langchain_community.docstore.in_memory import InMemoryDocstore
 import uuid
 import numpy as np
 
+"""KNOWLEDGE BASE: purpose of this program file is to provide structure for a 
+Knowledge base. This knowledge base consists of:
+A FAISS vector store, stored locally
+Knowledge base class: stores:
+ the location of the vector store
+ The embedder: used to embed text into vectors to store into the vectore store, and to decode vectors back into text
+ """
+
 #Creates the folder, as well as id_counter local storage
 def instantiate_empty_vector_store(path, embedder):
 
@@ -30,8 +38,9 @@ def instantiate_empty_vector_store(path, embedder):
     with open("id_counter.txt", "w") as file:
         file.write("0")
 
-
+#id_counter.txt stores the current vector id(primitive solution allowing us to access vector by id later, will find more elegant solution)
 class KnowledgeBase():
+    #inits instant of knowledge base with the vector store at the given path, and sets id counter to the current highest id counter in the vector store
     def __init__(self, vector_store_location, embedder, engine):
         self.vector_store_location = vector_store_location
         self.embedder = embedder
@@ -46,6 +55,7 @@ class KnowledgeBase():
         self.cur_vector_store = FAISS.load_local(self.vector_store_location, self.embedder, allow_dangerous_deserialization=True)
 
 
+    #Resets the vector store at the path defined in the knowledge base intit. 
 
     def reset_knowledge_base(self):
         self.id_counter = 0
@@ -64,7 +74,8 @@ class KnowledgeBase():
         self.cur_vector_store.save_local(self.vector_store_location)
         del self.cur_vector_store
         self.update_local_vector_store()
-          
+    
+    #Chunks a piece of text using a provided text splitter
     def chunk_text(self, text, text_splitter):
         #print("TEXT IS:", text)
             
@@ -75,7 +86,9 @@ class KnowledgeBase():
         
         chunks = text_splitter.create_documents(text)
         return chunks
-        
+    
+    #Given a series of documents(chunks returned by text splitter), embed the documents.
+    #
     def embed_data(self, documents, ids):
             
         embedder = HuggingFaceEmbeddings()
@@ -98,7 +111,7 @@ class KnowledgeBase():
         self.cur_vector_store.save_local(self.vector_store_location)
             #vector_store.save_local(knowledge_base)
         
-        
+    #Given a query, return num_vectors amount of context vectors(decoded) that are relevant to the query
     def query_knowledge(self, query, num_vectors):
         embedder = HuggingFaceEmbeddings()
         cur_vector_store = FAISS.load_local(self.vector_store_location, embedder, allow_dangerous_deserialization=True)
@@ -117,14 +130,16 @@ class KnowledgeBase():
         return (docs_dict)
             #self.engine.chat(query)
     
+
+    #EXPERIEMENTAL
     def strengthen_vector(vector, amount):
         return
         #Strengthens a vector by amount
-
+    #EXPERIEMENTAL
     def weaken_vector(vector, amount):
         return
         #Weakens a vector by amount
-    
+    #EXPERIEMENTAL: gets a vector from the vector store by it's unique id
     def vector_from_id(self, id):
         self.update_local_vector_store()
         doc_id = self.cur_vector_store.index_to_docstore_id[id]
@@ -153,7 +168,8 @@ class KnowledgeBase():
 
         self.embed_data(vector, id)
 
-
+    #EXPERIEMENTAL: given a prompt, the output, various feedbacks, and the context vectors that were used in answering the prompt:
+    #Modify the vector store manually(adjust vector locations) in order to refine the vector store
     def update_knowledge(self, prompt, output, pos_feedback, neg_feedback, add_feedback, vectors):
         #IMPORTANT NOTE EMBED DOCUMENT AND EMBED QUERY ARE DIFFERENT
         #NEED TO CHECK WHETHER, IN query_knowledge whether the query is embedded with embed_query to ensure consistency in getting the vector rep of the prompt
@@ -195,7 +211,7 @@ class KnowledgeBase():
             
             
          
-
+    """Given a text and a chunker, text is divided into chunks. Each chunk is embedded, assigned a unique id, and added to the vector store."""
     def upload_knowledge_1(self, text, source_name, chunker):
             # DIFFERENT APPROACHES:
             #1. Simply get LLM to summarize key findings from paper, and store them in text(SIMPLEST). Learn by: leaving it up to the LLM TO self learn. Furthering mehtods: cot reasoning, prompt tuning, etc
