@@ -9,10 +9,13 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_community.docstore.in_memory import InMemoryDocstore
 
-directory1 = "new_content"
+directory1 = "new_context"
 directory2 = "vector_stores"
 vector_store1 = "./vector_stores/knowledge_base"
 vector_store2 = "./vector_stores/agent_memory"
+
+with open("./knowledge_base_paper_list", 'w') as file:
+   pass
 
 if not os.path.exists(directory1):
     os.makedirs(directory1)

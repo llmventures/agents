@@ -5,6 +5,9 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/..")
 from agent_context_classes.Agent import Agent, ollama_engine
 from agent_context_classes.KnowledgeBase import KnowledgeBase, instantiate_empty_vector_store
 from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+
+
 
 
 #Command line interface showcasing the use of Agent and Knowledge base classes.
@@ -62,19 +65,34 @@ while (action != 6):
             if knowledge_action == 1:
                 if (input("Are you sure? If you still want to delete the whole knowledge base, enter the phrase delete.") == "delete"):
                     biologist_agent.context_base.reset_knowledge_base()
+                    with open("./knowledge_base_paper_list", 'w') as file:
+                        pass
 
             elif knowledge_action == 2:
                 print("TEMP: all files in input_folder will be added to the knowledge base.")
+                print("Texts currently in vecotr store:")
+                with open("./knowledge_base_paper_list", 'r') as list_file:
+                    list = list_file.read()
+                    print(list)
 
+                input = input("Ensure that all files in folder new_context are the ones you want to add to the vector store. When ready to proceed, enter any character")
+                
                 for filename in os.listdir(input_dir):
                     file_path = os.path.join(input_dir, filename)
                     # Check if it's a file (not a directory)
                     if os.path.isfile(file_path):
+                        with open("./knowledge_base_paper_list", 'w') as list_file:
+                            list_file.write(filename + '\n')
                         with open(file_path, 'r') as file:
                             print("opening file")
                             content = file.read()
-
-                            biologist_agent.context_base.upload_knowledge_1([content], filename)
+                            chunker = RecursiveCharacterTextSplitter(
+                                chunk_size=200,
+                                chunk_overlap=20,
+                                length_function=len,
+                                is_separator_regex=False,
+                            )
+                            biologist_agent.context_base.upload_knowledge_1([content], filename, chunker)
             elif knowledge_action == 4:
                 id = int(input("Enter the id of the vector you wish to locate:"))
                 print("####################################################################\n\n")
