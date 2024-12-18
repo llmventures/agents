@@ -17,6 +17,7 @@ Task(in agent.py): A task is a guideline for an agent, describing the expected o
 Generating a prediction(in main.py): given a row from a dataframe, acquire the chromosome and position values. Pass these into get_list with range 50k, and 
 
 Execution order:
+Download most recent gencode GTF release(https://www.gencodegenes.org/human/), make sure it's in the root proj_identify_casual_gene
 1. (Only on first execution) Process a dataset of GWAS loci(in process_databases.py), compress it using python pickle library for quicker runtimes in later use
 2. Assemble a CrewAI crew with the agent and task
 3. Iterate through the processed dataset. For each row, pass the chromosome and position values into get_list to acquire a gene list. Pass the gene list, and phenotype(given by the value in column trait_info.reported_trait_name) to the crew.

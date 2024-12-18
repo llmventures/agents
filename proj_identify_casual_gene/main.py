@@ -18,14 +18,10 @@ def generate_prediction(row):
         'phenotype': phenotype,
         'gene_list': gene_list,
     }
-    #print(f"Row in opentargets:{row_index}")
-    #print(f"Phenotype:{phenotype}")
-    #print(f"Chromosome used: {chromosome}  Position used: {position}")
-    #print(f"Gene list:{gene_list}")
+    
     result = crew.kickoff(inputs = inputs)
     return result
 def main():
-    #row_index = int(input("Row in opentargets:"))
     opentargets_df = pd.read_pickle("./opentargets_df.pkl")
     result_df = pd.DataFrame(columns = ['Row', 'GS_Gene_id', 'Generated_id', 'Confidence', 'Match'])
     for i in range(1, 2):
@@ -34,7 +30,6 @@ def main():
         print(row)
         data = json.loads(generate_prediction(row))
         append_row = {'Row': i, 'GS_Gene_id': row['gold_standard_info.gene_id'], 'Generated_id' : data["gene_id"], 'Confidence:': data["confidence_level"], 'Match': data["gene_id"]==row['gold_standard_info.gene_id']}
-        #print(data)
         result_df = pd.concat([result_df, pd.DataFrame([append_row])])
     print(result_df)    
         

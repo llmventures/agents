@@ -4,6 +4,7 @@ import requests
 import gget
 import os
 import sys
+import glob
 
 import pyranges
 import pickle
@@ -17,7 +18,8 @@ def gene_id_to_name(gene_id):
         return fetched_data['primary_gene_name'][0]
 
 
-gencode_file = '/Users/Kevin/Downloads/gencode.v43.annotation.gtf'
+gencode_file = (glob.glob(os.path.join("./", "gencode.*")))[0]
+#searches for a gencode file(WILL RETURN ERROR IF NOT PRESENT)
 
 
 #extracting and cleaning the opentargets datasets
@@ -33,38 +35,24 @@ else:
     print("download failed")
     sys.exit(1)
 
-opentargets_df_1 = opentargets_df_1[opentargets_df_1['gold_standard_info.evidence.confidence']=='High']
-gene_id_list = opentargets_df_1['gold_standard_info.gene_id']
-"""
-print("starting")
+#processing database
+pickle_loc = "./opentargets_df.pkl"
+if (not os.path.exists(pickle_loc)):
+    opentargets_df_1 = opentargets_df_1[opentargets_df_1['gold_standard_info.evidence.confidence']=='High']
+    gene_id_list = opentargets_df_1['gold_standard_info.gene_id']
 
-for index, row in opentargets_df_1.iterrows():
-    print(index)
-    opentargets_df_1.at[index, 'gene_name'] = gene_id_to_name(row['gold_standard_info.gene_id'])
-#opentargets_df_1['gene_name'] =opentargets_df_1['gold_standard_info.gene_id'].apply(gene_id_to_name)
-print("applied")
-opentargets_df_1= opentargets_df_1[opentargets_df_1['gene_name'].notnull()]
-"""
+    for index, row in opentargets_df_1.iterrows():
+        opentargets_df_1.at[index, 'gene_name'] = gene_id_to_name(row['gold_standard_info.gene_id'])
+        print("Index:", index)
+    opentargets_df_1= opentargets_df_1[opentargets_df_1['gene_name'].notnull()]
 
-print(opentargets_df_1)
-
-
-
-opentargets_df_1.to_pickle("./opentargets_df.pkl")
-
-
-
+    opentargets_df_1.to_pickle("./opentargets_df.pkl")
+    print("Open targets dataset processed and loaded")
 
 #pyrranges
-
 gr = pyranges.read_gtf(gencode_file)
 selector = (gr.Feature == 'CDS') & (gr.Source == 'ENSEMBL')
 cds = gr [selector]
-
-
-
-
-
 
 
 #function: given a chromosome, position, range, return a list of genes 
