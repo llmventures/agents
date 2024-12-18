@@ -88,8 +88,10 @@ class Agent:
         chat_knowledge = '\n'.join(f"{key}: {value}" for key, value in relevant_knowledge.items())
         
 
-
-        prompt = f"""Use the following pieces of context, along with previous relevant interactions derived from your knowledge base to answer the question at the end.
+     
+        prompt = f"""
+                You are a {self.role}. With the following goal: {self.goal}.
+                Use the following pieces of context, along with previous relevant interactions derived from your knowledge base to answer the question at the end.
                 context: {context}
                 previous relevant interactions: {chat_knowledge}
                 question: {query}

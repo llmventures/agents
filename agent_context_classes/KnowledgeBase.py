@@ -23,7 +23,7 @@ Knowledge base class: stores:
 
 #Creates the folder, as well as id_counter local storage
 def instantiate_empty_vector_store(path, embedder):
-
+    
     index = faiss.IndexFlatL2(len(embedder.embed_query("hello world")))
         
     empty_vector_store = FAISS(
@@ -35,7 +35,7 @@ def instantiate_empty_vector_store(path, embedder):
     
     empty_vector_store.save_local(path)
 
-    with open("id_counter.txt", "w") as file:
+    with open(f"""{path}/id_counter.txt""", "w") as file:
         file.write("0")
 
 #id_counter.txt stores the current vector id(primitive solution allowing us to access vector by id later, will find more elegant solution)
@@ -45,7 +45,7 @@ class KnowledgeBase():
         self.vector_store_location = vector_store_location
         self.embedder = embedder
         self.engine = engine
-        with open("id_counter.txt", "r") as file:
+        with open(f"""{vector_store_location}/id_counter.txt""", "r") as file:
             self.id_counter = int(file.read())
         
         self.cur_vector_store = FAISS.load_local(self.vector_store_location, self.embedder, allow_dangerous_deserialization=True)
@@ -59,7 +59,7 @@ class KnowledgeBase():
 
     def reset_knowledge_base(self):
         self.id_counter = 0
-        with open("id_counter.txt", "w") as file:
+        with open(f"""{self.vector_store_location}/id_counter.txt""", "w") as file:
             file.write("0")
         
         index = faiss.IndexFlatL2(len(self.embedder.embed_query("hello world")))
@@ -163,7 +163,7 @@ class KnowledgeBase():
         vector.append(doc)
         
         self.id_counter+=1
-        with open("id_counter.txt", "w") as file:
+        with open(f"""{self.vector_store_location}/id_counter.txt""", "w") as file:
             file.write(str(self.id_counter))
 
         self.embed_data(vector, id)
@@ -272,7 +272,7 @@ class KnowledgeBase():
                 ids.append(self.id_counter)
                 self.id_counter +=1
 
-            with open("id_counter.txt", "w") as file:
+            with open(f"""{self.vector_store_location}/id_counter.txt""", "w") as file:
                 file.write(str(self.id_counter))
             #uuids = [str(uuid.uuid4()) for _ in range(len(vector_docs))]
 

@@ -1,13 +1,31 @@
-from Agent import Agent, ollama_engine
-from KnowledgeBase import KnowledgeBase
+import sys
 import os
 
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/..")
+from agent_context_classes.Agent import Agent, ollama_engine
+from agent_context_classes.KnowledgeBase import KnowledgeBase, instantiate_empty_vector_store
+from langchain_community.embeddings import HuggingFaceEmbeddings
+
+
+#Command line interface showcasing the use of Agent and Knowledge base classes.
+#Functionality to: chunk and embed a text into the knowledge base
+#Chat with agent, which will draw on it's knowledge base and chat logs.
+
+#Add functionality to: learn/improve it's knowledge base
+#Experiement with modifying vectors
+
+#Initialization: Sets the engine(ollama mistral), embedder, location of context base,
+#location of memory base, role, goal
+#To add new context, add text file to ./new_context. 
 
 engine = ollama_engine(model = "mistral")
-context_base = KnowledgeBase("./vector_stores/knowledge_base", engine)
-memory_base = KnowledgeBase("./vector_stores/agent_memory", engine)
-
-biologist_agent = Agent(engine, context_base, memory_base)
+embedder = HuggingFaceEmbeddings()
+context_base = KnowledgeBase("./vector_stores/knowledge_base", embedder, engine)
+memory_base = KnowledgeBase("./vector_stores/agent_memory", embedder ,engine)
+role = "Biologist Agent"
+goal = "Answer user queries."
+additional_info = ""
+biologist_agent = Agent(role, goal, additional_info, engine, context_base, memory_base)
 
 input_dir = "./new_context"
 
@@ -150,7 +168,45 @@ while (action != 6):
             
             page_content = f"Query:{query}->Output:{output}->Feedback:{feedback}"
             biologist_agent.memory_base.add_vector(page_content, timestamp)
+    #Chat log is saved in a text file, and also stored into the vector db
+    #Add a fifth option: also chat log, but pass as textual context instead of drawing from rag
+    if (action == 5):
+        chat_buffer = []
+        chat_log_full = ""
+        convo_iter = 0
+        query = ""
+        query = input("Enter a starting query to the biologist agent.")
+        output, relevant_knowledge, relevant_context, timestamp = biologist_agent.answer_query(query)
+        
+        print(f"""Biologist agent: {output}\n""")
+        chat_entry = f"""User: {query}\n
+        Biologist Agent: {output}\n
+        """
+        chat_buffer.append(chat_entry)
+        while (query != "STOP"):
+            query = input("Followup response(enter STOP to exit conversation): ")
+            output, relevant_knowledge, relevant_context, timestamp = biologist_agent.answer_query(query)
+            print(f"""Biologist agent: {output}\n""")
+            chat_entry = f"""User: {query}\n
+            Biologist Agent: {output}\n
+            """
+            chat_buffer.append(chat_entry)
+            if (len(chat_buffer) == 3):
+                text = "\n".join(chat_buffer)
+                chat_buffer = []
+                biologist_agent.memory_base.add_vector(text, timestamp)
+                chat_log_full += text + "\n"
 
+        if (len(chat_buffer) > 0):
+            text = "\n".join(chat_buffer)
+            biologist_agent.memory_base.add_vector(text, timestamp)
+            chat_log_full += text + "\n"
 
-
+        os.makedirs("./conversation_logs", exist_ok=True)
+        path = "./conversation_logs/log_" + timestamp
+        with open(path, "w") as file:
+            file.write(chat_log_full) 
+        
+            
+            
 

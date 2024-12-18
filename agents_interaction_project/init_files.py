@@ -22,7 +22,7 @@ def init_files(vector_store_path, embedder, starting_date):
     directory = "./stored_papers_info"
     if not os.path.exists(directory):
         os.makedirs(directory)
-        
+
     for file in os.listdir(directory):
         file_path = os.path.join(directory, file)
         if os.path.isfile(file_path):

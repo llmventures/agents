@@ -284,7 +284,7 @@ def run_agent_convo(embedder, engine):
 
 
     
-    
+    #ADD CONVO LOG TO THE VECTOR DB AS WELL
     
 
 embedder = HuggingFaceEmbeddings()

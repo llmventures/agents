@@ -1,30 +1,27 @@
-from graphrag_test.agent_framework.Agent import Agent, ollama_engine
-from graphrag_test.agent_framework.KnowledgeBase import KnowledgeBase
-import os
 import faiss
 import os
+import sys
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/..")
+from agent_context_classes.KnowledgeBase import instantiate_empty_vector_store
+
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_huggingface import HuggingFaceEmbeddings
-import json
 from langchain_community.vectorstores import FAISS
-from langchain_core.documents import Document
 from langchain_community.docstore.in_memory import InMemoryDocstore
-import uuid
-import numpy as np
 
+directory1 = "new_content"
+directory2 = "vector_stores"
+vector_store1 = "./vector_stores/knowledge_base"
+vector_store2 = "./vector_stores/agent_memory"
 
-os.mkdir("new_content")
-os.mkdir("vector_stores")
+if not os.path.exists(directory1):
+    os.makedirs(directory1)
+
+if not os.path.exists(directory2):
+    os.makedirs(directory2)
 
 embedder = HuggingFaceEmbeddings()
-index = faiss.IndexFlatL2(len(embedder.embed_query("hello world")))
-        
-initial_vector_store = FAISS(
-                embedding_function=embedder,
-                index=index,
-                docstore=InMemoryDocstore(),
-                index_to_docstore_id={},
-            )
-        
-initial_vector_store.save_local("./vector_stores/knowledge_base")
-initial_vector_store.save_local("./vector_stores/agent_memory")
+
+instantiate_empty_vector_store(vector_store1, embedder)
+instantiate_empty_vector_store(vector_store2, embedder)
+
