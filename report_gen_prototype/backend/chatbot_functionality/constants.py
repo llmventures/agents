@@ -1,19 +1,6 @@
-"""
     #Method 1: Agents run completely separate from each other, Lead consolidates their answer at the end
     elif (method == 1):
-        agents_info = "\n".join(agent.to_string() for agent_name, agent in agents_map.items())
-        task_assign_prompt = f"""You have been given this task by your director: {task}. 
-            Given the following list of possible agents to choose from: {agents_info}
-            Choose the agents you want on your team to complete this task. Further, assign each agent a subtask, such that
-            you could compile all the agents output together when creating your final report.
-            """        
-        
-        output = ProjectLead.answer_query(task_assign_prompt)
 
-
-        print(output)
-        print(guiding_prompt)
-        exit()
         #...parsing output
         team#Placeholder for parsed list of agents in output and tasks
         team = {"Biologist": "Task1", "Yes":"Task2"}
@@ -77,5 +64,4 @@
                 continue_cycle = "pass" not in critique.lower()
                 #For cycles number, apply the critique to the prompt.
             
-                """
             
