@@ -2,25 +2,30 @@
 import React, { useState, useEffect, Component } from 'react';
 import ReportForm from "../components/ReportForm"
 import { useNavigate } from 'react-router-dom';
+import { useLocation } from "react-router-dom"
 
 
 
 function Home () {
+
+    const location = useLocation();
+    const initData = location.state ?? {};
+
     const navigate = useNavigate();
-    const [name, setName] = useState('')
-    const [task, setTask] = useState('')
-    const [description, setDescription] = useState('')
-    const [expectations, setExpectations] = useState('')
-    const [model, setModel] = useState('')
-    const [context, setContext] = useState<File[]>([]);
-    const [cycles, setCycles] = useState('');
-    const [reportGuidelines, setReportGuidelines] = useState('');
-    const [method, setMethod] = useState('');
-    const [temp, setTemp] = useState('');
-    const [engine, setEngine] = useState('')
-    const [lead, setLead] = useState('');
-    const [selectedInDBFiles, setSelectedInDBFiles] = useState<string[]>([])
-    const [selectedAgents, setSelectedAgents] = useState<string[]>([])
+    const [name, setName] = useState(initData.name || '')
+    const [task, setTask] = useState(initData.task || '')
+    const [description, setDescription] = useState(initData.description || '')
+    const [expectations, setExpectations] = useState(initData.expectations || '')
+    const [model, setModel] = useState(initData.model || '')
+    const [context, setContext] = useState<File[]>(initData.context || []);
+    const [cycles, setCycles] = useState(initData.cycles || '');
+    const [reportGuidelines, setReportGuidelines] = useState(initData.reportGuidelines || '');
+    const [method, setMethod] = useState(initData.method || '');
+    const [temp, setTemp] = useState(initData.temp || '');
+    const [engine, setEngine] = useState(initData.engine || '')
+    const [lead, setLead] = useState(initData.lead || '');
+    const [selectedInDBFiles, setSelectedInDBFiles] = useState<string[]>(initData.selectedInDBFiles || [])
+    const [selectedAgents, setSelectedAgents] = useState<string[]>(initData.selectedAgents || [])
     
     const onSelectFileChange = (names: string[]) => {
         setSelectedInDBFiles(names)

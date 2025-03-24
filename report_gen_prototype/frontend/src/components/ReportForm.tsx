@@ -163,7 +163,7 @@ function ReportForm({name, task, onSelectFileChange, onSelectAgentChange, expect
             required
             />
         </div>
-        
+        {/*
         <div className="select">
             <label htmlFor="method" className="form-label">Method</label>
             <select 
@@ -175,8 +175,9 @@ function ReportForm({name, task, onSelectFileChange, onSelectAgentChange, expect
             <option value="2">2. </option>
             required
             </select>
-           
+            
         </div>
+        */}
         <div className="select">
             <label htmlFor="method" className="form-label">Engine</label>
             <select 
@@ -201,6 +202,7 @@ function ReportForm({name, task, onSelectFileChange, onSelectAgentChange, expect
             </select>
            
         </div>
+        
         <div className="select">
             <label htmlFor="method" className="form-label">Lead</label>
             <select 
@@ -208,7 +210,7 @@ function ReportForm({name, task, onSelectFileChange, onSelectAgentChange, expect
             onChange={onLeadChange}
             
             >
-            <option selected>Choose model</option>
+            <option selected>Choose lead</option>
             {leadsList.map((cur_lead) => (
                 <option value={cur_lead.name}>{cur_lead.name} </option>
             ))}

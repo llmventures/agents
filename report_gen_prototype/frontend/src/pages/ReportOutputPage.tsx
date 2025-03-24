@@ -11,12 +11,28 @@ function ReportOutputPage () {
     const [deleteDisabled, setDeleteDisabled] = useState(false);
     const [saveDisabled, setSaveDisabled] = useState(false);
     const location = useLocation();
-    const subData = location.state;
+    const subData = location.state || {};
+    const [name, setName] = useState(subData.name || '')
+    const [task, setTask] = useState(subData.task || '')
+    const [description, setDescription] = useState(subData.description || '')
+    const [expectations, setExpectations] = useState(subData.expectations || '')
+    const [model, setModel] = useState(subData.model || '')
+    const [context, setContext] = useState<File[]>(subData.context || []);
+    const [cycles, setCycles] = useState(subData.cycles || '');
+    const [reportGuidelines, setReportGuidelines] = useState(subData.reportGuidelines || '');
+    const [method, setMethod] = useState('2');
+    const [temp, setTemp] = useState(subData.temp || '');
+    const [engine, setEngine] = useState(subData.engine || '')
+    const [lead, setLead] = useState(subData.lead || '');
+    const [selectedInDBFiles, setSelectedInDBFiles] = useState<string[]>(subData.selectedInDBFiles || [])
+    const [selectedAgents, setSelectedAgents] = useState<string[]>(subData.selectedAgents || [])
+    
+
+
     const hasFetched = useRef(false);
     const [isLoading, setLoadStatus] = useState<boolean>(false)
     const [report, setReport] = useState<any>(null)
     const [error, setError] = useState<string | null>(null);
-    const [name, setName] = useState<string>("")
 
     const deleteReport = (id:any) => {
         axios({
@@ -28,7 +44,25 @@ function ReportOutputPage () {
         })
         .then(response => {
             setDeleteDisabled(true)
-            navigate("/home")
+            console.log("navigating")
+            navigate("/", 
+                { state: { 
+                    name:name,
+                    task: task,
+                    description: description,
+                    expectation: expectations,
+                    model: model,
+                    context: context,
+                    selectedInDBFiles: selectedInDBFiles,
+                    selectedAgents: selectedAgents,
+                    cycles: cycles,
+                    reportGuidelines: reportGuidelines,
+                    method: method,
+                    temp: temp,
+                    engine: engine,
+                    lead: lead,
+                } 
+            });
         })
     }
 
@@ -46,41 +80,39 @@ function ReportOutputPage () {
     }
     if (!subData) return <p>No formdata</p>;
     useEffect(() => {       
+        console.log(deleteDisabled)
         setName(subData?.name)
         //guard to make sure axios is only called once
         if (hasFetched.current) return;
         hasFetched.current = true;
         console.log("About to run an axios call")
         const formData = new FormData();
-        formData.append("name", subData?.name)
-        console.log(subData)
-        console.log(subData?.name)
-        console.log(subData?.selectedInDBFiles)
-        formData.append("task", subData?.task)
-        formData.append("description", subData?.description)
-        formData.append("expectations", subData?.expectations)
-        formData.append("model", subData?.model)
-        for (let i=0; i < subData?.context.length; i++) {
-            formData.append("context_files", subData?.context[i])
+        formData.append("name", name)
+        formData.append("task", task)
+        formData.append("description", description)
+        formData.append("expectations", expectations)
+        formData.append("model", model)
+        for (let i=0; i < context.length; i++) {
+            formData.append("context_files", context[i])
         }
-        for (let i=0; i < subData?.selectedInDBFiles.length; i++) {
-            formData.append("selFiles", subData?.selectedInDBFiles[i])
+        for (let i=0; i < selectedInDBFiles.length; i++) {
+            formData.append("selFiles", selectedInDBFiles[i])
         }
-        if (subData?.selectedAgents.length == 0) {
+        if (selectedAgents.length == 0) {
             formData.append("selAgents", "all")
         }
         else {
-            for (let i=0; i < subData?.selectedAgents.length; i++) {
-                formData.append("selAgents", subData?.selectedAgents[i])
+            for (let i=0; i < selectedAgents.length; i++) {
+                formData.append("selAgents", selectedAgents[i])
             }
         }
-        subData?.selectedAgents
-        formData.append("cycles", subData?.cycles)
-        formData.append("reportGuidelines", subData?.reportGuidelines)
-        formData.append("method", subData?.method)
-        formData.append("temperature", subData?.temp)
-        formData.append("engine", subData?.engine)
-        formData.append("lead", subData?.lead)
+        selectedAgents
+        formData.append("cycles", cycles)
+        formData.append("reportGuidelines", reportGuidelines)
+        formData.append("method", method)
+        formData.append("temperature", temp)
+        formData.append("engine", engine)
+        formData.append("lead", lead)
         console.log("FORM DATA")
         console.log([...formData.entries()])
         setLoadStatus(true)
@@ -112,10 +144,10 @@ function ReportOutputPage () {
         <div>{isLoading && <Loader />}
         {(report != null && isLoading != true) && 
                 (
-                <>
+                <div>
                 <a 
                 href= {report.output}
-                className="list-group-item list-group-item-action"
+                className="text-blue-500 underline block"
                 target="_blank"
                 >
                 View report
@@ -123,19 +155,16 @@ function ReportOutputPage () {
                 
                 <a 
                 href= {report.chat_log}
-                className="list-group-item list-group-item-action"
+                className="text-blue-500 underline block"
                 target="_blank"
                 >
                 View chatlog
                 </a>
-                
-                </>
-                )}
-                
-                
                 <button disabled={deleteDisabled} type="button" className="btn btn-danger" onClick={() => deleteReport(name)}>Discard report</button>
                 <button disabled={saveDisabled} type="button" className="btn btn-danger" onClick={() => saveReportMemory(name)}>Save report in lead memory</button>
                 
+                </div>
+                )}
                 </div>
     );
     //const [selectedFile, setSelectedFile] = useState<File | null>(null);

@@ -161,8 +161,6 @@ def run_meeting(id):
     print("STARTING CONVERSATION")
     print("______________________________________________________")
 
-    os.system('cls' if os.name == 'nt' else 'clear')
-
     #Guiding prompt contains info all agents share about project objectives
     #method 2: conversation.
     final_report = ""
@@ -173,6 +171,7 @@ def run_meeting(id):
     #response after each cycle.
     #At end of each cycle, Lead agent injects some info about previous conversations(optionally)
     #At the end of all cycles, lead consolidates all information into a report.
+    
     if method == 1:
         print("Separate Agent conversations")
         start_prompt_format = AgentTasks
@@ -204,13 +203,14 @@ def run_meeting(id):
 
         
         """
-        output=conversation.convo_prompt(agent_name = "ProjectLead", prompt = start_prompt, return_log=False, return_response=True, query_kb = False, draw_from_knowledge=False, format = start_prompt_format)
+        output=conversation.convo_prompt(agent_name = "ProjectLead", prompt = start_prompt, return_log=False, return_response=True, draw_from_knowledge=False, format = start_prompt_format)
         print(output)
-         
-        tasks_dict = dict(output.agent_specific_tasks)
+        tasks_dict = {}
+        for i in output.agent_specific_tasks:
+            tasks_dict[i.agent_name] = i.task
         tasks_dict["All tasks"] = output.group_tasks
         
-        print(tasks_dict)
+        print("tasks dict:", tasks_dict)
         #Each agent has a separate conversation to ensure responses are not affected by
         #non area expertise information
         conversations = {name: Conversation({name: agent, "Analyst":analyst_agent}, engine) for name, agent in worker_team.items()}

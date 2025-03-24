@@ -19,8 +19,16 @@ from datetime import datetime
 import shutil
 
 from django.conf import settings
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 
-
+class HomeView(APIView):
+     
+    permission_classes = (IsAuthenticated, )
+    def get(self, request):
+        content = {'message': 'Welcome to the JWT Authentication page using React Js and Django!'}
+        return Response(content)
 
 # Create your views here.
 class AgentView(viewsets.ModelViewSet):
@@ -255,8 +263,8 @@ class ReportView(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         with transaction.atomic():
             instance = self.get_object()
-            report_path = os.path.join(settings.MEDIA_ROOT, "reports", "report_" + instance.name)
-            chat_path = os.path.join(settings.MEDIA_ROOT, "reports", "chatlog_" + instance.name)
+            report_path = os.path.join(settings.MEDIA_ROOT, "reports", "report_" + instance.name + ".txt")
+            chat_path = os.path.join(settings.MEDIA_ROOT, "report_logs", "chatlog_" + instance.name + ".txt")
             os.remove(report_path)
             os.remove(chat_path)
             instance.delete()
@@ -365,9 +373,9 @@ class ReportView(viewsets.ModelViewSet):
                 serializer = ReportSerializer(report, context={"request": request})
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             
-            except AssertionError:
-                print("assertion error")
-                return JsonResponse({"error": "Engine generated a conversation with agent not in django db"}, status=400) 
+            except Exception as e:
+                report.delete()
+                return JsonResponse({"error": e}, status=400) 
 
 
 
