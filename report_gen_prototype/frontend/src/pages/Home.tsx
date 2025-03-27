@@ -5,9 +5,10 @@ import { useNavigate } from 'react-router-dom';
 import { useLocation } from "react-router-dom"
 
 
-
 function Home () {
-
+    //message is placeholder, rperesenting USER SPEC data
+    const [message, setMessage] = useState('')
+    
     const location = useLocation();
     const initData = location.state ?? {};
 
@@ -75,6 +76,7 @@ function Home () {
         
 
     }
+    
     return (
         <div>
             

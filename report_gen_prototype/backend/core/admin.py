@@ -1,6 +1,14 @@
 from django.contrib import admin
-from .models import Agent, Report, TeamLead, Paper
+from django.contrib.auth.admin import UserAdmin
+from .models import Agent, Report, TeamLead, Paper, CustomUser
+from .forms import CustomUserChangeForm, CustomUserCreationForm
 # Register your models here.
+@admin.register(CustomUser)
+class CustomAdminUser(UserAdmin):
+    add_form = CustomUserCreationForm
+    form = CustomUserChangeForm
+
+    model = CustomUser
 
 class AgentAdmin(admin.ModelAdmin):
     list_display = ('name','role','expertise','knowledge','get_stored_papers')

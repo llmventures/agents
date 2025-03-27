@@ -7,6 +7,9 @@ import LeadPage from './pages/LeadPage';
 import Papers from './pages/Papers';
 import AgentPage from './pages/AgentPage';
 import ReportOutputPage from './pages/ReportOutputPage'
+import Login from './pages/Login'
+import Logout from './pages/Logout'
+import Register from './pages/Register'
 
 function App() {
   
@@ -18,6 +21,9 @@ function App() {
         <Route path='/agents' element = {<Agents />} />
         <Route path='/leads' element = {<Leads />} />
         <Route path='/papers' element = {<Papers />} />
+        <Route path='/login' element = {<Login />} />
+        <Route path='/register' element = {<Register />} />
+        <Route path='/logout' element = {<Logout />} />
         <Route path='/report_output' element = {<ReportOutputPage />} />
         <Route path="/leads/:name" element = {< LeadPage />} />
         <Route path="/agents/:name" element = {< AgentPage />} />

@@ -17,27 +17,12 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from core import views
-from rest_framework import routers
 from django.conf import settings
 from django.conf.urls.static import static
-from rest_framework_simplejwt import views as jwt_views
-from django.urls import path
 
-
-router = routers.DefaultRouter()
-router.register(r'agents', views.AgentView, 'agent')
-router.register(r'papers', views.PaperView, 'papers')
-router.register(r'leads', views.TeamLeadView, 'teamleads')
-router.register(r'reports', views.ReportView, 'reports')
 urlpatterns = [
-    path('', include('core.urls')),
-    path('token/', jwt_views.TokenObtainPairView.as_view(), 
-          name ='token_obtain_pair'),
-    path('token/refresh/', 
-        jwt_views.TokenRefreshView.as_view(), 
-        name ='token_refresh'),
     path('admin/', admin.site.urls),
-    path('api/', include(router.urls)),
+    path('api/', include("core.urls")),    
     path('api/test_report/', views.generate_report, name='generate_report'),
     path('api/save_report_memory/<str:name>', views.save_report_memory, name='save_report_memory'),
     path('api/leads/<str:name>/', views.TeamLeadView.as_view({'get': 'retrieve'}), name='lead-detail'),
