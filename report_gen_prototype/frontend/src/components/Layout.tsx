@@ -24,7 +24,7 @@ export default function Layout({ children, ...props }: Props) {
                 "Authorization":`Bearer ${accessToken}`
               }
             };
-            await axios.post("http://127.0.0.1:8000/api/logout/", {"refresh":refreshToken}, config)
+            await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/logout/`, {"refresh":refreshToken}, config)
             localStorage.removeItem("accessToken");
             localStorage.removeItem("refreshToken");
             setLoggedIn(false);
@@ -43,7 +43,9 @@ export default function Layout({ children, ...props }: Props) {
                 const token = localStorage.getItem("accessToken");
                 if (!token) {
                     setLoggedIn(false)
-                    navigate("/login");
+                    if (location.pathname !== "/register") {
+                        navigate("/login");
+                    }
                     return
                 }
                 const config = {
@@ -60,7 +62,10 @@ export default function Layout({ children, ...props }: Props) {
             catch(error) {
                 setLoggedIn(false)
                 setUsername("")
-                //navigate("/login")
+                if (location.pathname !== "/register") {
+                    navigate("/login");
+                }
+
             }
         };
         checkLoggedInUser()

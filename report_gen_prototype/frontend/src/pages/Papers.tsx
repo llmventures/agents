@@ -7,7 +7,9 @@ function Papers () {
     const [papers, setPapers] = useState<any[]>([])
     const [error, setError] = useState<string | null>(null);
     const [reload, setReload] = useState<number>(0)
+    const accessToken = localStorage.getItem("accessToken");
     const deleteClicked = (id:any) => {
+        
         console.log("DELETING AT")
         console.log(`http://localhost:8000/api/papers/${id}/`)
         axios({
@@ -23,11 +25,12 @@ function Papers () {
     }
     
     useEffect(() => {
+        
         axios({
             url: "http://localhost:8000/api/papers/",
             method: "GET",
             headers: {
-                authorization: "placer auth token"
+                "Authorization":`Bearer ${accessToken}`
             }
         })
         .then((response:any) => {
@@ -67,7 +70,7 @@ function Papers () {
             url: "http://localhost:8000/api/papers/",
             method: "POST",
             headers: {
-                authorization: "placer auth"
+                "Authorization":`Bearer ${accessToken}`
             },
             data: formData
         })
@@ -77,12 +80,12 @@ function Papers () {
             
         })
         .catch((Error) => {
-            if (Error.response.data.error == "Lead name already exists.") {
-                setError("Lead name already exists. Choose a different one.")
-                console.error('Error creating new lead');
+            if (Error.response.data.error == "paper name already exists.") {
+                setError("paper name already exists. Choose a different one.")
+                console.error('Error creating new paper');
             }
             else {
-                setError("Error:" + Error.response.data.error)
+                setError("Error creating paper:" + Error.response.data.error)
                 console.error(Error.response)
             }
 

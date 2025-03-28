@@ -32,14 +32,15 @@ function Agents () {
     //strings to the options param?
     //Then there would be no need to unpack here either
     const [agents, setAgents] = useState<any[]>([])
-
+    const accessToken = localStorage.getItem("accessToken");
 
     useEffect(() => {
+        
         axios({
-            url: "http://localhost:8000/api/agents/",
+            url: `${import.meta.env.VITE_BACKEND_URL}/api/agents/`,
             method: "GET",
             headers: {
-                authorization: "placer auth token"
+                "Authorization":`Bearer ${accessToken}`
             }
         })
         .then((response:any) => {
@@ -93,10 +94,10 @@ function Agents () {
         console.log([...formData.entries()])
         setLoadStatus(true)
         axios({
-            url: "http://localhost:8000/api/agents/",
+            url: `${import.meta.env.VITE_BACKEND_URL}/agents/`,
             method: "POST",
             headers: {
-                authorization: "placer auth"
+                "Authorization":`Bearer ${accessToken}`
             },
             data: formData
         })

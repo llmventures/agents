@@ -1,5 +1,4 @@
 import React, { useState, useEffect, Component } from 'react';
-import axios from "axios";
 import MultiselectPapers from './MultiselectPapers';
   
 interface AgentFormProps {

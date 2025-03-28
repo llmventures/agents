@@ -6,13 +6,14 @@ import { useNavigate } from 'react-router-dom';
 
 
 function LeadPage() {
+    const accessToken = localStorage.getItem("accessToken");
     const navigate = useNavigate();
     const deleteClicked = () => {
         axios({
-            url: `http://localhost:8000/api/leads/${name}/`,
+            url: `${import.meta.env.VITE_BACKEND_URL}/api/leads/${name}/`,
             method: "DELETE",
             headers: {
-                authorization: "placer auth token"
+                "Authorization":`Bearer ${accessToken}`
             }
         })
         .then(response => {
@@ -25,12 +26,11 @@ function LeadPage() {
     const [description, setDescription] = useState('')
     useEffect(() => {
         console.log("URL: ")
-        console.log(`http://localhost:8000/api/leads/${name}/`)
         axios({
-            url: `http://localhost:8000/api/leads/${name}/`,
+            url: `${import.meta.env.VITE_BACKEND_URL}/api/leads/${name}/`,
             method: "GET",
             headers: {
-                authorization: "placer auth token"
+                "Authorization":`Bearer ${accessToken}`
             }
         })
         .then((response:any) => {

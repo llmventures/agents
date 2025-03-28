@@ -11,11 +11,12 @@ function AgentPage() {
     const [expertise, setExpertise] = useState('')
     const [files, setFiles] = useState<any[]>([]) 
     useEffect(() => {
+        const accessToken = localStorage.getItem("accessToken");
         axios({
-            url: `http://localhost:8000/api/agents/${name}/`,
+            url: `${import.meta.env.VITE_BACKEND_URL}/api/agents/?name=${name}/`,
             method: "GET",
             headers: {
-                authorization: "placer auth token"
+                "Authorization":`Bearer ${accessToken}`
             }
         })
         .then((response:any) => {

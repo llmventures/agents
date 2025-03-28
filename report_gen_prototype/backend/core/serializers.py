@@ -41,7 +41,8 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 class PaperSerializer(serializers.ModelSerializer):
     class Meta:
         model = Paper
-        fields = ('file','name', 'id', 'file_type')
+        fields = ('file','name', 'id', 'file_type', 'user')
+        extra_kwargs = {"user": {"read_only": True}}
 
 class AgentSerializer(serializers.ModelSerializer):
     stored_papers = PaperSerializer(many=True)

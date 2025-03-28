@@ -45,12 +45,13 @@ interface ReportFormProps {
 }
 function ReportForm({name, task, onSelectFileChange, onSelectAgentChange, expectations, description,reportGuidelines, uploadedFiles, cycles, method, temperature, engine, model, lead, onFilesChange, onMethodChange,onNameChange, onTaskChange, onLeadChange,onCyclesChange, onExpectationsChange, onEngineChange, onReportGuidelinesChange, onModelChange, onDescriptionChange, onTemperatureChange,onSubmit}: ReportFormProps) {
     const [leadsList, setLeadsList] = useState<any[]>([])
+    const accessToken = localStorage.getItem("accessToken");
     useEffect(() => {
         axios({
-            url: "http://localhost:8000/api/leads/",
+            url: `${import.meta.env.VITE_BACKEND_URL}/api/leads`,
             method: "GET",
             headers: {
-                authorization: "placer auth token"
+                "Authorization":`Bearer ${accessToken}`
             }
         })
         .then((response:any) => {

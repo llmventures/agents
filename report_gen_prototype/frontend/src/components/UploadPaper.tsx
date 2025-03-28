@@ -1,11 +1,13 @@
 import axios from "axios";
 
 function UploadPapers(paper: File): string {
+    const accessToken = localStorage.getItem("accessToken");
+
     axios({
-        url: "http://localhost:8000/api/papers/",
+        url: `${import.meta.env.VITE_BACKEND_URL}/api/papers/`,
         method: "POST",
         headers: {
-            authorization: "placer auth"
+            "Authorization":`Bearer ${accessToken}`
         },
         data: paper
     })
@@ -18,7 +20,7 @@ function UploadPapers(paper: File): string {
     })
     .catch((Error) => {
         console.error(Error.response)
-        return ("Error:" + Error.response.data.error);
+        return ("Error uploading paper:" + Error.response.data.error);
         
 
     })

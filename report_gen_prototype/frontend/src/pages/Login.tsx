@@ -36,7 +36,8 @@ function Login () {
           setIsLoading(true);
           setError(null);
           try{
-              const response = await axios.post("http://127.0.0.1:8000/api/login/", formData)
+              console.log(formData)
+              const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/login/`, formData)
               console.log("Success!", response.data)
               localStorage.setItem("accessToken", response.data.tokens.access);
               localStorage.setItem("refreshToken", response.data.tokens.refresh)
@@ -47,8 +48,8 @@ function Login () {
           }
           catch(error){
             console.log("error catching")
-            handleAxiosError(Error)
-            console.error(Error)
+            handleAxiosError(error)
+            console.error(error)
           }
           finally{
               setIsLoading(false)

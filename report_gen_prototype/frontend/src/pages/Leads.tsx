@@ -7,14 +7,14 @@ function Leads () {
     const [description, setDescription] = useState('')
     const [leads, setLeads] = useState<any[]>([])
     const [error, setError] = useState<string | null>(null);
-
+    const accessToken = localStorage.getItem("accessToken");
 
     useEffect(() => {
         axios({
             url: "http://localhost:8000/api/leads/",
             method: "GET",
             headers: {
-                authorization: "placer auth token"
+                "Authorization":`Bearer ${accessToken}`
             }
         })
         .then((response:any) => {
@@ -39,7 +39,7 @@ function Leads () {
             url: "http://localhost:8000/api/leads/",
             method: "POST",
             headers: {
-                authorization: "placer auth"
+                "Authorization":`Bearer ${accessToken}`
             },
             data: lead
         })

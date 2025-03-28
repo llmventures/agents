@@ -24,11 +24,12 @@ const MultiselectPapers: React.FC<MultiSelectPapersProps> =({passNamesToParent})
         
     }
     useEffect(() => {
+        const accessToken = localStorage.getItem("accessToken");
         axios({
-            url: "http://localhost:8000/api/papers/",
+            url: `${import.meta.env.VITE_BACKEND_URL}/api/papers/`,
             method: "GET",
             headers: {
-                authorization: "placer auth token"
+                "Authorization":`Bearer ${accessToken}`
             }
         } )
         .then((response:any) => {
