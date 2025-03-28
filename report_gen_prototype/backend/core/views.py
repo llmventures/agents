@@ -81,6 +81,10 @@ class AgentView(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         return Agent.objects.filter(user=user)
+    
+    
+    
+    
     #overrides retrieve s.t it only retrieves if name and user matches
     def list(self, request, *args, **kwargs):
         """Retrieve all agents for the authenticated user, or filter by name."""
@@ -94,16 +98,36 @@ class AgentView(viewsets.ModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
-    def destroy(self, request, *args, **kwargs):
+    def retrieve(self, request, *args, **kwargs):
+        """Retrieve a specific lead for the authenticated user."""
         user = request.user
-        agent_name = kwargs.get('name')
-        instance = get_object_or_404(Agent, name=agent_name, user=user)
-        instance.stored_papers.clear()
-        path = os.path.join(settings.BASE_DIR, f"{instance.user.username}_knowledge_bases", f'agent', f"{instance.name}")
-        print("Destroy path:", path)
-        shutil.rmtree(path)
-        instance.delete()
-        return Response({"message": "Agent successfully deleted"}, status = status.HTTP_204_NO_CONTENT)
+        agent_name = kwargs.get("pk")
+        
+        try:
+            lead = Agent.objects.get(user=user, name=agent_name)
+        except Agent.DoesNotExist:
+            return Response({"error": "Agent not found for this user."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = self.get_serializer(lead)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+
+    def destroy(self, request, *args, **kwargs):
+        with transaction.atomic():
+            user = request.user
+            agent_name = kwargs.get('pk')
+            
+            try:
+                agent = Agent.objects.get(user=user, name=agent_name)
+            except TeamLead.DoesNotExist:
+                return Response({"error": "Agent not found for this user."}, status=status.HTTP_404_NOT_FOUND)
+
+            agent.stored_papers.clear()
+            path = os.path.join(settings.BASE_DIR, f"{user.username}_knowledge_bases", f'agent', f"{agent.name}")
+            print("Destroy path:", path)
+            shutil.rmtree(path)
+            agent.delete()
+            return Response({"message": "Agent successfully deleted"}, status = status.HTTP_204_NO_CONTENT)
 
     def create(self, request, *args, **kwargs):
         with transaction.atomic():
@@ -111,6 +135,8 @@ class AgentView(viewsets.ModelViewSet):
             user = request.user
             username = request.user.username
             name= request.data.get('name')
+            print("user is", user)
+            print("agent name", name)
             if Agent.objects.filter(name=name, user=user).exists():
                 return Response({"error": "Agent name already exists for this user."}, status = status.HTTP_400_BAD_REQUEST)
             #IMPORTANT: check that name not taken
@@ -120,7 +146,8 @@ class AgentView(viewsets.ModelViewSet):
             selFiles = request.POST.getlist('selFiles')
             
             #Now, create a knowledge base instance in root
-            knowledge_path = f".{username}_knowledge_bases/agent/{name}"
+            knowledge_path = f"{username}_knowledge_bases/agent/{name}"
+            print("Creating agent knowledge base at ", knowledge_path)
             agent_knowledge = KnowledgeBase(knowledge_path, embedder_name="HuggingFaceEmbeddings")
             #Add papers to knowledge base
 
@@ -212,6 +239,9 @@ class PaperView(viewsets.ModelViewSet):
         user = self.request.user
         return Paper.objects.filter(user=user)
     
+    
+    
+    
     #get for multiple: ie, all papers
     def list(self, request, *args, **kwargs):
         """Retrieve all papers for the authenticated user, or filter by name."""
@@ -226,7 +256,7 @@ class PaperView(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
     
 
-    def create( self, request, *args, **kwargs):
+    def create(self, request, *args, **kwargs):
         with transaction.atomic():
             user = request.user
             username = request.user.username
@@ -243,14 +273,15 @@ class PaperView(viewsets.ModelViewSet):
             )
             paper.save()
             return Response("Paper created")
+        
     #for getting one paper: ie, individual paper page
     def retrieve(self, request, *args, **kwargs):
         """Retrieve a specific paper for the authenticated user."""
         user = request.user
-        paper_name = kwargs.get("name")
+        paper_id = kwargs.get("pk")
         
         try:
-            paper = Paper.objects.get(user=user, name=paper_name)
+            paper = Paper.objects.get(user=user, id=paper_id)
         except Paper.DoesNotExist:
             return Response({"error": "paper not found for this user."}, status=status.HTTP_404_NOT_FOUND)
 
@@ -259,11 +290,17 @@ class PaperView(viewsets.ModelViewSet):
     
     def destroy(self, request, *args, **kwargs):
         with transaction.atomic():
-            instance = self.get_object()
-            path = os.path.join(settings.MEDIA_ROOT, instance.user.username, f"papers", instance.name)
+            user = request.user
+            paper_id = kwargs.get("pk")
+            try:
+                paper = Paper.objects.get(user=user, id=paper_id)
+            except Paper.DoesNotExist:
+                return Response({"error": "Paper not found for this user."}, status=status.HTTP_404_NOT_FOUND)
+
+            path = os.path.join(settings.MEDIA_ROOT, user.username, f"papers", paper.name)
             print("Destroy path:", path)
             os.remove(path)
-            instance.delete()
+            paper.delete()
             return Response({"message": "Paper successfully deleted"}, status = status.HTTP_204_NO_CONTENT)
             
         
@@ -347,33 +384,36 @@ def generate_report(request):
     print(res)
     return JsonResponse({"status": "success", "data": res})
 #saves the report in "output" to the lead
-"""
+
 def save_report_memory(request, name):
-    report_inst = Report.objects.filter(name=name)
-    report_text = ""
-    with open(report_inst.output, 'r') as file:
-        report_text = file.read()
-    report_inst.output
-    lead = report_inst.lead
-    lead_kb_path = lead.kb_path
-    lead_kb = KnowledgeBase.from_path(lead_kb_path)
+    if request.method == 'POST':
+        report_inst = Report.objects.filter(name=name)
+        report_text = ""
+        with open(report_inst.output, 'r') as file:
+            report_text = file.read()
+        report_inst.output
+        lead = report_inst.lead
+        lead_kb_path = lead.kb_path
+        lead_kb = KnowledgeBase.from_path(lead_kb_path)
 
-    chunker = RecursiveCharacterTextSplitter(
-        chunk_size=200,
-        chunk_overlap=20,
-        length_function=len,
-        is_separator_regex=False,
-    )
+        chunker = RecursiveCharacterTextSplitter(
+            chunk_size=200,
+            chunk_overlap=20,
+            length_function=len,
+            is_separator_regex=False,
+        )
 
-    lead_kb.upload_knowledge_1(text= report_text, source_name= report_inst.name, chunker = chunker)
-    return JsonResponse({'message': f'report saved in lead kb'})
-"""
+        lead_kb.upload_knowledge_1(text= report_text, source_name= report_inst.name, chunker = chunker)
+        return JsonResponse({'message': f'report saved in lead kb'})
+
 
 class ReportView(viewsets.ModelViewSet):
     serializer_class = ReportSerializer
     def get_queryset(self):
         user = self.request.user
         return Report.objects.filter(user=user)
+    
+    
     
     def list(self, request, *args, **kwargs):
         """Retrieve all reports for the authenticated user, or filter by name."""
@@ -387,14 +427,34 @@ class ReportView(viewsets.ModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
+    def retrieve(self, request, *args, **kwargs):
+        """Retrieve a specific report for the authenticated user."""
+        user = request.user
+        report_name = kwargs.get("pk")
+        
+        try:
+            report = Report.objects.get(user=user, name=report_name)
+        except Report.DoesNotExist:
+            return Response({"error": "Report not found for this user."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = self.get_serializer(report)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    
     def destroy(self, request, *args, **kwargs):
         with transaction.atomic():
-            instance = self.get_object()
-            report_path = os.path.join(settings.MEDIA_ROOT, instance.user.username, "reports", "report_" + instance.name + ".txt")
-            chat_path = os.path.join(settings.MEDIA_ROOT, instance.user.username, "report_logs", "chatlog_" + instance.name + ".txt")
+            user = request.user
+            report_name = kwargs.get("pk")
+            try:
+                report = TeamLead.objects.get(user=user, name=report_name)
+            except Report.DoesNotExist:
+                return Response({"error": "Report not found for this user."}, status=status.HTTP_404_NOT_FOUND)
+
+            report_path = os.path.join(settings.MEDIA_ROOT, user.username, "reports", "report_" + report.name + ".txt")
+            chat_path = os.path.join(settings.MEDIA_ROOT, user.username, "report_logs", "chatlog_" + report.name + ".txt")
             os.remove(report_path)
             os.remove(chat_path)
-            instance.delete()
+            report.delete()
             return Response({"message": "Report successfully deleted"}, status = status.HTTP_204_NO_CONTENT)
             
         

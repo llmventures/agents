@@ -9,14 +9,11 @@ function Papers () {
     const [reload, setReload] = useState<number>(0)
     const accessToken = localStorage.getItem("accessToken");
     const deleteClicked = (id:any) => {
-        
-        console.log("DELETING AT")
-        console.log(`http://localhost:8000/api/papers/${id}/`)
         axios({
             url: `http://localhost:8000/api/papers/${id}/`,
             method: "DELETE",
             headers: {
-                authorization: "placer auth token"
+                "Authorization":`Bearer ${accessToken}`
             }
         })
         .then(response => {
@@ -35,7 +32,7 @@ function Papers () {
         })
         .then((response:any) => {
             setPapers(response.data)
-            console.log(papers)
+            //console.log(papers)
         })
         .catch((error:any) => {
             console.log('Error fetching papers', error.response)
@@ -63,7 +60,7 @@ function Papers () {
 
         formData.append("file", selectedFile)
             
-        console.log([...formData.entries()])
+        //console.log([...formData.entries()])
         setError(null);
 
         axios({

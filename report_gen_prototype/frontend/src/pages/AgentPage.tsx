@@ -10,10 +10,11 @@ function AgentPage() {
     const [role, setRole] = useState('')
     const [expertise, setExpertise] = useState('')
     const [files, setFiles] = useState<any[]>([]) 
+    const accessToken = localStorage.getItem("accessToken");
     useEffect(() => {
-        const accessToken = localStorage.getItem("accessToken");
+        
         axios({
-            url: `${import.meta.env.VITE_BACKEND_URL}/api/agents/?name=${name}/`,
+            url: `${import.meta.env.VITE_BACKEND_URL}/api/agents/${name}/`,
             method: "GET",
             headers: {
                 "Authorization":`Bearer ${accessToken}`
@@ -23,7 +24,6 @@ function AgentPage() {
             setRole(response.data.role)
             setExpertise(response.data.expertise)
             setFiles(response.data.stored_papers)
-            console.log("FILES: ", files)
             //console.log(files)
         })
         .catch((error:any) => {
@@ -37,7 +37,7 @@ function AgentPage() {
             url: `http://localhost:8000/api/agents/${name}/`,
             method: "DELETE",
             headers: {
-                authorization: "placer auth token"
+                "Authorization":`Bearer ${accessToken}`
             }
         })
         .then(response => {

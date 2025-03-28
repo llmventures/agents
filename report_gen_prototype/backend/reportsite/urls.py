@@ -24,7 +24,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include("core.urls")),    
     #path('api/test_report/', views.generate_report, name='generate_report'),
-    ##path('api/save_report_memory/<str:name>', views.save_report_memory, name='save_report_memory'),
+    path('api/save_report_memory/<str:name>', views.save_report_memory, name='save_report_memory'),
     #path('api/leads/<str:name>/', views.TeamLeadView.as_view({'get': 'retrieve'}), name='lead-detail'),
     #path('api/leads/<str:name>/', views.AgentView.as_view({'get': 'retrieve'}), name='agent-detail'),
 ]

@@ -27,6 +27,9 @@ function Login () {
             setError("Unknown error")
           }
     }
+    const handleNav = () => {
+        navigate('/register');
+    }
     const handleSubmit = async (e:any) => {
       e.preventDefault();
           if(isLoading){
@@ -79,7 +82,10 @@ function Login () {
                 <label>password:</label><br/>
                 <input type="password" name = "password" value={formData.password} onChange={handleChange}></input>
                 <br/>
-                <button type="submit" disabled={isLoading} onClick={handleSubmit}>Login</button>
+                <div>
+                    <button type="submit" disabled={isLoading} onClick={handleSubmit}>Login</button>
+                    <button onClick={handleNav} style={{ color: 'blue', background: 'none', border: 'none' }}>Register</button>
+                </div>
             </form>
         </div>
     )

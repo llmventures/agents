@@ -94,7 +94,7 @@ function Agents () {
         console.log([...formData.entries()])
         setLoadStatus(true)
         axios({
-            url: `${import.meta.env.VITE_BACKEND_URL}/agents/`,
+            url: `${import.meta.env.VITE_BACKEND_URL}/api/agents/`,
             method: "POST",
             headers: {
                 "Authorization":`Bearer ${accessToken}`

@@ -33,13 +33,13 @@ function ReportOutputPage () {
     const [isLoading, setLoadStatus] = useState<boolean>(false)
     const [report, setReport] = useState<any>(null)
     const [error, setError] = useState<string | null>(null);
-
+    const accessToken = localStorage.getItem("accessToken");
     const deleteReport = (id:any) => {
         axios({
             url: `http://localhost:8000/api/reports/${id}/`,
             method: "DELETE",
             headers: {
-                authorization: "placer auth token"
+                "Authorization":`Bearer ${accessToken}`
             }
         })
         .then(response => {
@@ -69,9 +69,9 @@ function ReportOutputPage () {
     const saveReportMemory = (reportId:any) => {
         axios({
             url: `http://localhost:8000/api/save_report_memory/${reportId}/`,
-            method: "DELETE",
+            method: "POST",
             headers: {
-                authorization: "placer auth token"
+                "Authorization":`Bearer ${accessToken}`
             }
         })
         .then(response => {
@@ -120,7 +120,7 @@ function ReportOutputPage () {
             url: "http://localhost:8000/api/reports/",
             method: "POST",
             headers: {
-                authorization: "placer auth"
+                "Authorization":`Bearer ${accessToken}`
             },
             data: formData
         })
