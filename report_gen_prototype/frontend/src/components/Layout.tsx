@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import axios from "axios"
 import { useNavigate } from 'react-router-dom';
 import { useLocation } from "react-router-dom";
+import api from "./api"
 
 interface Props {
     children?: ReactNode
@@ -19,12 +20,8 @@ export default function Layout({ children, ...props }: Props) {
           const refreshToken = localStorage.getItem("refreshToken");
     
           if(accessToken && refreshToken) {
-            const config = {
-              headers: {
-                "Authorization":`Bearer ${accessToken}`
-              }
-            };
-            await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/logout/`, {"refresh":refreshToken}, config)
+            
+            await api.post(`/logout/`, {"refresh":refreshToken})
             localStorage.removeItem("accessToken");
             localStorage.removeItem("refreshToken");
             setLoggedIn(false);
@@ -40,6 +37,7 @@ export default function Layout({ children, ...props }: Props) {
     useEffect (()=>{
         const checkLoggedInUser = async () => {
             try {
+                console.log("checking if user is still logged in ")
                 const token = localStorage.getItem("accessToken");
                 if (!token) {
                     setLoggedIn(false)
@@ -48,12 +46,8 @@ export default function Layout({ children, ...props }: Props) {
                     }
                     return
                 }
-                const config = {
-                    headers: {
-                        "Authorization": `Bearer ${token}`
-                    }
-                };
-                const response = await axios.get("http://localhost:8000/api/user/", config);
+                
+                const response = await api.get("http://localhost:8000/api/user/");
                 
                 setLoggedIn(true)
                 setUsername(response.data.username)

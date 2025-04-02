@@ -1,6 +1,8 @@
 import PaperForm from '../components/PaperForm';
 import React, { useState, useEffect } from 'react';
 import axios from "axios";
+import api from '../components/api'
+
 
 function Papers () {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -8,35 +10,27 @@ function Papers () {
     const [error, setError] = useState<string | null>(null);
     const [reload, setReload] = useState<number>(0)
     const accessToken = localStorage.getItem("accessToken");
-    const deleteClicked = (id:any) => {
-        axios({
-            url: `http://localhost:8000/api/papers/${id}/`,
-            method: "DELETE",
-            headers: {
-                "Authorization":`Bearer ${accessToken}`
-            }
-        })
-        .then(response => {
+    const deleteClicked = async(id:any) => {
+        try {
+            const response = api.delete(`/papers/${id}/`)
             setReload(reload + 1)
-        })
+        }
+        catch (error:any) {
+            console.log("error deleting paper")
+        }
     }
     
     useEffect(() => {
-        
-        axios({
-            url: "http://localhost:8000/api/papers/",
-            method: "GET",
-            headers: {
-                "Authorization":`Bearer ${accessToken}`
+        const getPapers = async() => {
+            try {
+                const response = await api.get('/papers/')
+                setPapers(response.data)
             }
-        })
-        .then((response:any) => {
-            setPapers(response.data)
-            //console.log(papers)
-        })
-        .catch((error:any) => {
-            console.log('Error fetching papers', error.response)
-        })
+            catch (error:any) {
+                console.log('Error fetching papers', error.response)
+            }
+        }
+        getPapers();
     })
 
     //onFileChange:

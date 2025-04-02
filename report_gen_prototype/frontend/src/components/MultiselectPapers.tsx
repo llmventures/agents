@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from "axios";
 import Select from 'react-select';
-
+import api from './api'
 type OptionType = {
     value: string;
     label: string;
@@ -25,23 +25,20 @@ const MultiselectPapers: React.FC<MultiSelectPapersProps> =({passNamesToParent})
     }
     useEffect(() => {
         const accessToken = localStorage.getItem("accessToken");
-        axios({
-            url: `${import.meta.env.VITE_BACKEND_URL}/api/papers/`,
-            method: "GET",
-            headers: {
-                "Authorization":`Bearer ${accessToken}`
+        const getPapers = async() => {
+            try {
+                const response = await api.get('/papers/')
+                const options = response.data.map((cur_paper : any) => ({
+                    value: cur_paper.name,
+                    label: cur_paper.name,
+                }));
+                setOptions(options)
             }
-        } )
-        .then((response:any) => {
-            const options = response.data.map((cur_paper : any) => ({
-                value: cur_paper.name,
-                label: cur_paper.name,
-            }));
-            setOptions(options)
-        })
-        .catch((error:any) => {
-            console.log('Error fetching papers', error.response)
-        })
+            catch (error:any) {
+                console.log('Error fetching papers', error.response)
+            }
+        }
+        getPapers()
     },[]);
 
     return (

@@ -2,6 +2,7 @@ import React, { useState, useEffect, Component } from 'react';
 import axios from "axios";
 import MultiselectPapers from './MultiselectPapers';
 import MultiselectAgents from './MultiselectAgents';
+import api from '../components/api'
 interface ReportFormProps {
     /*name = models.CharField(max_length = 50)
     date = models.DateTimeField()
@@ -45,21 +46,18 @@ interface ReportFormProps {
 }
 function ReportForm({name, task, onSelectFileChange, onSelectAgentChange, expectations, description,reportGuidelines, uploadedFiles, cycles, method, temperature, engine, model, lead, onFilesChange, onMethodChange,onNameChange, onTaskChange, onLeadChange,onCyclesChange, onExpectationsChange, onEngineChange, onReportGuidelinesChange, onModelChange, onDescriptionChange, onTemperatureChange,onSubmit}: ReportFormProps) {
     const [leadsList, setLeadsList] = useState<any[]>([])
-    const accessToken = localStorage.getItem("accessToken");
     useEffect(() => {
-        axios({
-            url: `${import.meta.env.VITE_BACKEND_URL}/api/leads`,
-            method: "GET",
-            headers: {
-                "Authorization":`Bearer ${accessToken}`
+        const getLeads = async() => {
+            try {
+                const response = await api.get('/leads/');
+                setLeadsList(response.data)
             }
-        })
-        .then((response:any) => {
-            setLeadsList(response.data)
-        })
-        .catch((error:any) => {
-            console.log('Error fetching team leads', error.response)
-        })
+            catch(error: any) {
+                console.log('Error fetching team leads', error.response)
+            }
+        }
+        getLeads()
+        
     })
     
     
@@ -120,8 +118,10 @@ function ReportForm({name, task, onSelectFileChange, onSelectAgentChange, expect
             required
             />
         </div>
-        <MultiselectPapers passNamesToParent={onSelectFileChange}/>
+
         <MultiselectAgents passNamesToParent={onSelectAgentChange}/>
+        <MultiselectPapers passNamesToParent={onSelectFileChange}/>
+        
         <div className="mb-3">
             <label htmlFor="file" className="form-label">Context files pdf</label>
             <input 
@@ -142,26 +142,26 @@ function ReportForm({name, task, onSelectFileChange, onSelectAgentChange, expect
 
 
         <div className="mb-3">
-            <label htmlFor="reportGuidelines" className="form-label">Number of cycles</label>
+            <label htmlFor="reportGuidelines" className="form-label">Number of cycles (leave blank for 1)</label>
             <input 
             type="number" 
             className="form-control" 
             id="cycles"
             value={cycles}
             onChange={onCyclesChange}
-            required
+            
             />
         </div>
 
         <div className="mb-3">
-            <label htmlFor="reportGuidelines" className="form-label">Temperature</label>
+            <label htmlFor="reportGuidelines" className="form-label">Temperature (leave blank for 0.8)</label>
             <input 
             type="number" 
             className="form-control" 
             id="temp"
             value={temperature}
             onChange={onTemperatureChange}
-            required
+            
             />
         </div>
         {/*
@@ -180,26 +180,26 @@ function ReportForm({name, task, onSelectFileChange, onSelectAgentChange, expect
         </div>
         */}
         <div className="select">
-            <label htmlFor="method" className="form-label">Engine</label>
+            <label htmlFor="method" className="form-label">Engine (leave blank for ollama)</label>
             <select 
             className="form-select"
             onChange={onEngineChange}
             >
             <option selected>Choose engine</option>
             <option value="Ollama">Ollama </option>
-            required
+            
             </select>
            
         </div>
         <div className="select">
-            <label htmlFor="method" className="form-label">Model</label>
+            <label htmlFor="method" className="form-label">Model (leave blank for mistral)</label>
             <select 
             className="form-select"
             onChange={onModelChange}
             >
             <option selected>Choose model</option>
             <option value="mistral">Ollama: mistral </option>
-            required
+            
             </select>
            
         </div>

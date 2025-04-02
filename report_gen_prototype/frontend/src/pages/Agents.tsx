@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import axios from "axios";
 import UploadPapers from "../components/UploadPaper";
 import Loader from "../components/Loader"
+import api from '../components/api'
 //Multi file upload: files should be a list of files
 //OnFilesChange: setSelectedFiles to an array of file objs
 //FormSubmit: map(for i in SelectedFiles): generate list that can represent 
@@ -35,21 +36,16 @@ function Agents () {
     const accessToken = localStorage.getItem("accessToken");
 
     useEffect(() => {
-        
-        axios({
-            url: `${import.meta.env.VITE_BACKEND_URL}/api/agents/`,
-            method: "GET",
-            headers: {
-                "Authorization":`Bearer ${accessToken}`
+        const getAgents = async () => {
+            try {
+                const response = await api.get('/agents/')
+                setAgents(response.data)
             }
-        })
-        .then((response:any) => {
-            setAgents(response.data)
-            //console.log(agents)
-        })
-        .catch((error:any) => {
-            console.log('Error fetching agents', error.response)
-        })
+            catch (error: any) {
+                console.log('Error fetching agents', error.response)
+            }
+        }
+        getAgents()
     })
     //handles change in the multiselect for papers in db
     const onSelectFileChange = (names: string[]) => {
@@ -93,26 +89,19 @@ function Agents () {
         console.log("FORM DATA")
         console.log([...formData.entries()])
         setLoadStatus(true)
-        axios({
-            url: `${import.meta.env.VITE_BACKEND_URL}/api/agents/`,
-            method: "POST",
-            headers: {
-                "Authorization":`Bearer ${accessToken}`
-            },
-            data: formData
-        })
-        .then(response => {
-            console.log('New agent created:', response.data)
-            setLoadStatus(false)
-            //set papers
-            
-        })
-        .catch((Error) => {
-            setError("Error:" + Error.response.data.error)
-            console.error(Error.response)
-            setLoadStatus(false)
-
-        })
+        const createAgent = async() => {
+            try {
+                const response = await api.post('/agents/', formData)
+                console.log('New agent created:', response.data)
+                setLoadStatus(false)
+            }
+            catch (Error: any) {
+                setError("Error:" + Error.response.data.error)
+                console.error(Error.response)
+                setLoadStatus(false)
+            }
+        }
+        createAgent()
 
         setName('')
         setRole('')

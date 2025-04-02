@@ -4,12 +4,12 @@ import { useLocation } from "react-router-dom"
 import { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Loader from '../components/Loader'
-
+import api from '../components/api'
 
 function ReportOutputPage () {
     const navigate = useNavigate();
     const [deleteDisabled, setDeleteDisabled] = useState(false);
-    const [saveDisabled, setSaveDisabled] = useState(false);
+    const [savedToLead, setSavedToLead] = useState<boolean>(false)
     const location = useLocation();
     const subData = location.state || {};
     const [name, setName] = useState(subData.name || '')
@@ -34,15 +34,39 @@ function ReportOutputPage () {
     const [report, setReport] = useState<any>(null)
     const [error, setError] = useState<string | null>(null);
     const accessToken = localStorage.getItem("accessToken");
-    const deleteReport = (id:any) => {
-        axios({
-            url: `http://localhost:8000/api/reports/${id}/`,
-            method: "DELETE",
-            headers: {
-                "Authorization":`Bearer ${accessToken}`
+    const [isLoggedIn, setLoggedIn] = useState<boolean | null>(false)
+    const [username, setUsername] = useState("")
+
+    const checkLoggedInUser = async () => {
+        try {
+            const token = localStorage.getItem("accessToken");
+            if (!token) {
+                setLoggedIn(false)
+                if (location.pathname !== "/register") {
+                    navigate("/login");
+                }
+                return
             }
-        })
-        .then(response => {
+
+            const response = await api.get("/user/");
+            
+            setLoggedIn(true)
+            setUsername(response.data.username)
+            //navigate("/")
+        }
+        catch(error) {
+            setLoggedIn(false)
+            setUsername("")
+            if (location.pathname !== "/register") {
+                navigate("/login");
+            }
+
+        }
+    };
+    
+    const deleteReport = async(id:any) => {
+        try {
+            const response = await api.delete(`/reports/${id}`)
             setDeleteDisabled(true)
             console.log("navigating")
             navigate("/", 
@@ -63,23 +87,28 @@ function ReportOutputPage () {
                     lead: lead,
                 } 
             });
-        })
+        }
+        catch (error: any) {
+            console.log("errror deleting report")
+        }
+        
     }
 
-    const saveReportMemory = (reportId:any) => {
-        axios({
-            url: `http://localhost:8000/api/save_report_memory/${reportId}/`,
-            method: "POST",
-            headers: {
-                "Authorization":`Bearer ${accessToken}`
-            }
-        })
-        .then(response => {
-            setSaveDisabled(true)
-        })
+    const saveReportMemory = async (reportId:any) => {
+        setLoadStatus(true)
+        try {
+            const response = await api.post(`save_report_memory/${reportId}/`)
+            setSavedToLead(true)
+            setLoadStatus(false)
+        }
+        catch (error: any) {
+            console.log('Error fetching agents', error.response)
+            setLoadStatus(false)
+        }
     }
     if (!subData) return <p>No formdata</p>;
-    useEffect(() => {       
+    useEffect(() => {    
+        checkLoggedInUser()   
         console.log(deleteDisabled)
         setName(subData?.name)
         //guard to make sure axios is only called once
@@ -91,7 +120,7 @@ function ReportOutputPage () {
         formData.append("task", task)
         formData.append("description", description)
         formData.append("expectations", expectations)
-        formData.append("model", model)
+        formData.append("model", model || "mistral");
         for (let i=0; i < context.length; i++) {
             formData.append("context_files", context[i])
         }
@@ -107,50 +136,78 @@ function ReportOutputPage () {
             }
         }
         selectedAgents
-        formData.append("cycles", cycles)
+        formData.append("cycles", cycles || '1')
         formData.append("reportGuidelines", reportGuidelines)
         formData.append("method", method)
-        formData.append("temperature", temp)
-        formData.append("engine", engine)
+        formData.append("temperature", temp || '0.8')
+        formData.append("engine", engine || 'Ollama')
         formData.append("lead", lead)
         console.log("FORM DATA")
         console.log([...formData.entries()])
         setLoadStatus(true)
-        axios({
-            url: "http://localhost:8000/api/reports/",
-            method: "POST",
-            headers: {
-                "Authorization":`Bearer ${accessToken}`
-            },
-            data: formData
-        })
-        .then(response => {
-            console.log('New report generated:', response.data)
-            setReport(response.data)
-            setLoadStatus(false)
-            
-            
-        })
-        .catch((Error) => {
-            //setError("Error:" + Error.response.data.error)
-            console.log("error catching")
-            console.error(Error)
-            setLoadStatus(false)
-        })
+        const postReport = async() => {
+            try {
+                const response = await api.post('/reports', formData)
+                console.log('New report generated:', response.data)
+                setReport(response.data)
+                setLoadStatus(false)
+            }
+            catch (Error:any) {
+                console.log("error catching")
+                console.error(Error)
+                setLoadStatus(false)
+                navigate("/", 
+                    { state: { 
+                        name:name,
+                        task: task,
+                        description: description,
+                        expectations: expectations,
+                        model: model,
+                        context: context,
+                        selectedInDBFiles: selectedInDBFiles,
+                        selectedAgents: selectedAgents,
+                        cycles: cycles,
+                        reportGuidelines: reportGuidelines,
+                        method: method,
+                        temp: temp,
+                        engine: engine,
+                        lead: lead,
+                        error: Error.response.data.error
+                    } 
+                });
+            }
+        }
+        postReport();
     }, []);
     //what to do for report saving:
     //if not want to be saved, then delete the obj
     return (
-        <div>{isLoading && <Loader />}
+        <div className="flex items-center justify-center h-screen">
+            {error && (
+                <div className="alert alert-danger alert-dismissible fade show" role="alert">
+                {error}
+                <button
+                    type="button"
+                    className="btn-close"
+                    data-bs-dismiss="alert"
+                    aria-label="Close"
+                    onClick={() => setError(null)}
+                ></button>
+                </div>
+            )}
+            {isLoading && <div className="flex justify-center items-center h-screen">
+                <Loader />
+                Generating report...
+            </div>}
         {(report != null && isLoading != true) && 
                 (
-                <div>
+                <div className="flex flex-col space-y-2">
                 <a 
                 href= {report.output}
                 className="text-blue-500 underline block"
                 target="_blank"
                 >
-                View report
+                    View report
                 </a>
                 
                 <a 
@@ -161,7 +218,7 @@ function ReportOutputPage () {
                 View chatlog
                 </a>
                 <button disabled={deleteDisabled} type="button" className="btn btn-danger" onClick={() => deleteReport(name)}>Discard report</button>
-                <button disabled={saveDisabled} type="button" className="btn btn-danger" onClick={() => saveReportMemory(name)}>Save report in lead memory</button>
+                <button disabled={savedToLead} type="button" className="btn btn-danger" onClick={() => saveReportMemory(name)}>Save report in lead memory</button>
                 
                 </div>
                 )}

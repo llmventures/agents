@@ -3,7 +3,7 @@ import React, { useState, useEffect, Component } from 'react';
 import ReportForm from "../components/ReportForm"
 import { useNavigate } from 'react-router-dom';
 import { useLocation } from "react-router-dom"
-
+import Instructions from "../components/Instructions"
 
 function Home () {
     //message is placeholder, rperesenting USER SPEC data
@@ -27,7 +27,11 @@ function Home () {
     const [lead, setLead] = useState(initData.lead || '');
     const [selectedInDBFiles, setSelectedInDBFiles] = useState<string[]>(initData.selectedInDBFiles || [])
     const [selectedAgents, setSelectedAgents] = useState<string[]>(initData.selectedAgents || [])
-    
+    const [error, setError] = useState<string | null>(null);
+    const [showInstr, setShowInstr] = useState<boolean>(() => {
+        return localStorage.getItem("showInstr") === "true";
+      });
+    console.log(showInstr)
     const onSelectFileChange = (names: string[]) => {
         setSelectedInDBFiles(names)
     }
@@ -51,6 +55,10 @@ function Home () {
           setContext(uploaded);
         }
     }
+    useEffect(() => {
+        localStorage.removeItem("showInstr");
+      }, []);
+      
     const formSubmit = (event: React.FormEvent) => {
         event.preventDefault()
         
@@ -79,7 +87,21 @@ function Home () {
     
     return (
         <div>
-            
+            {error && (
+                <div className="alert alert-danger alert-dismissible fade show" role="alert">
+                {error}
+                <button
+                    type="button"
+                    className="btn-close"
+                    data-bs-dismiss="alert"
+                    aria-label="Close"
+                    onClick={() => setError(null)}
+                ></button>
+                </div>
+            )}
+
+            <Instructions startingShow={showInstr}></Instructions>
+
             <h3>Generate a new report</h3>
             <ReportForm
                 name = {name}

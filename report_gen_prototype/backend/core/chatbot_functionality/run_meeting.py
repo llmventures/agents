@@ -17,7 +17,7 @@ class AgentTasks(BaseModel):
     group_tasks: str
 
 
-def run_meeting(id):
+def run_meeting(params):
     from django.conf import settings
     from .Agent import Conversation, Agent
     #from .AgentsTemplates import ProjectLead, Analyst, agents_map, agents_list, setup_team
@@ -31,50 +31,42 @@ def run_meeting(id):
     import sys
     #This script runs within report creation view: after prelim info has been uploaded
     #Get report creation info from backend
-    response = requests.get(f'http://localhost:8000/api/reports/{id}/')
+    print(params)    
     #parsing fields
-    data = response.json()
-    task = data.get("task")
-    expectations = data.get("expectations")
-    cycles = data.get("cycles")
-    report_guidelines = data.get("report_guidelines")
-    method = data.get("method")
-    temperature = data.get("temperature")
-    engine_name = data.get("engine")
-    model_name = data.get("model")
-    lead_name = data.get("lead_name")
-    draw_from_knowledge = data.get("draw_from_knowledge")
+    task = params["task"]
+    expectations = params["expectations"]
+    cycles = params["cycles"]
+    report_guidelines = params["report_guidelines"]
+    method = params["method"]
+    temperature = params["temperature"]
+    engine_name = params["engine"]
+    model_name = params["model"]
+    draw_from_knowledge = params["draw_from_knowledge"]
+    username = params["user"]
     #draw_from_knowledge determines whether the LEAD will draw from it's previous convo info
     #draw from knowledge determines whehter the lead draws from previous report info or not
     #Gets the lead: pretty much just another name for a knowledge baes containing embeddings of the 
     #chat logs from previous conversations generated with the same lead
-    lead = requests.get(f'http://localhost:8000/api/leads/{lead_name}')
-    lead_data = lead.json()
-    #Get agents: From all agents defined within the django db. TODO: change to allow users to limit
-    #the agents taht can be chosen
-    #agents_data = requests.get(f'http://localhost:8000/api/agents').json()
-    agents_data = data.get("potential_agents")
-    print("Agents data:", agents_data)
-
-    #Get context papers user passed in as text
-    #Note: because of django's annoying auto file formatter(converts spaces to _), check for that here
-    paper_ref_list = data.get("context")
-    papers_to_text = []
-    for paper in paper_ref_list:
-        paper_name = paper['name'].replace(" ", "_")
-        paper_file = open(os.path.join(settings.MEDIA_ROOT, "papers", paper_name))
-        paper_content = paper_file.read()
-        papers_to_text.append(paper_content)
-        paper_file.close()
-    
-    #Get the knowledge base for the specified lead
-    team_kb_path = lead_data.get('kb_path')
-    TeamKnowledgeBase = KnowledgeBase.from_path(team_kb_path)
+    lead_path = params["lead_path"]
+    TeamKnowledgeBase = KnowledgeBase.from_path(lead_path)
 
     #Generate a lead agent. This lead agent will be the team's liason to the knowledge base 
     #of previous chat log data
     lead_agent = Agent(lead_role, lead_expertise, memory= TeamKnowledgeBase)
     lead_agent.set_goal(lead_goal)
+
+    #Get context papers user passed in as text
+    #Note: because of django's annoying auto file formatter(converts spaces to _), check for that here
+    paper_ref_list = params["context"]
+    papers_to_text = []
+    for paper_name in paper_ref_list:
+        parsed_paper_name = paper_name.replace(" ", "_")
+        paper_file = open(os.path.join(settings.MEDIA_ROOT, username, "papers", parsed_paper_name))
+        paper_content = paper_file.read()
+        papers_to_text.append(paper_content)
+        paper_file.close()
+        
+    
     #Create the setup team: does initial agent choosing, task assignment, guiding q generation
     setup_team = {
         "ProjectLead": lead_agent,
@@ -87,11 +79,15 @@ def run_meeting(id):
     setup_conversation = Conversation(setup_team, engine)
     agents_map = {}
 
+
+    #Get agents: From all agents defined within the django db. 
+    agents_data = params["potential_agents"]
+
     for agent in agents_data:
-        agent_name = agent.get('name')
-        agent_role = agent.get('role')
-        expertise = agent.get('expertise')
-        agent_kb_path = agent.get('kb_path')
+        agent_name = agent['name']
+        agent_role = agent['role']
+        expertise = agent['expertise']
+        agent_kb_path = agent['kb_path']
 
         agents_map[agent_name] = Agent(agent_role, expertise, memory=KnowledgeBase.from_path(agent_kb_path))
 
@@ -106,8 +102,10 @@ def run_meeting(id):
 
     {agents_info}
     Choose the agents you want on your team to complete this task based on their role and expertise. 
-    Only choose agents from the list provided here: {agents_list}
-    and do not choose the same agent twice.
+     **Important:** 
+    - You are only allowed to select agents from the following list: {agents_list}.
+    - Do **not** choose any agents who are not in the provided `agents_list`.
+    - Do **not** select the same agent more than once.
     
     Now provide your answer. 
     
@@ -129,7 +127,6 @@ def run_meeting(id):
         for i in parsed_output:
             if i not in agents_list:
                 valid_team = False
-        valid_team = True
             
     #Worker team is a team consisting of the chosen agents
     worker_team = {key: agents_map[key] for key in parsed_output if key in agents_map}
@@ -337,7 +334,7 @@ def run_meeting(id):
         print("CONVERSATION END")
         concluding_prompt = f"Lead: given the conersation that has taken place, summarize your findings into a report that follows the guidelines:"
         f"{report_guidelines}"
-        f"Ensure the report clearly delivers on the main task. As a reminder, the task was {task}"
+        f"Ensure the report clearly delivers on the main task. As a reminder, the task was {task}. Further, ensure the report must follow any specifics described in the expectations: {expectations}"
         final_report = conversation.convo_prompt(agent_name="ProjectLead",prompt=concluding_prompt,return_response=True,return_log=False, debug_log=True, draw_from_knowledge=draw_from_knowledge)
         #os.system('cls' if os.name == 'nt' else 'clear')
         

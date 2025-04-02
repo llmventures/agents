@@ -11,7 +11,7 @@ class CustomAdminUser(UserAdmin):
     model = CustomUser
 
 class AgentAdmin(admin.ModelAdmin):
-    list_display = ('name','role','expertise','knowledge','get_stored_papers')
+    list_display = ('name','role','expertise','knowledge')
     def get_stored_papers(self, obj):
         return "\n".join([str(stored_papers) for stored_papers in obj.knowledge.all()])
 class ReportAdmin(admin.ModelAdmin):

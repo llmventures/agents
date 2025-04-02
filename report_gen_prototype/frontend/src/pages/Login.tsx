@@ -39,14 +39,17 @@ function Login () {
           setIsLoading(true);
           setError(null);
           try{
-              console.log(formData)
-              const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/login/`, formData)
-              console.log("Success!", response.data)
-              localStorage.setItem("accessToken", response.data.tokens.access);
-              localStorage.setItem("refreshToken", response.data.tokens.refresh)
-              
-              navigate('/');
-              window.location.reload();
+                console.log(formData)
+                const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/login/`, formData)
+                console.log("Success!", response.data)
+                localStorage.setItem("accessToken", response.data.tokens.access);
+                localStorage.setItem("refreshToken", response.data.tokens.refresh)
+                const decoded = JSON.parse(atob(response.data.tokens.access.split('.')[1])); // Decode JWT payload
+                const expirationTime = decoded.exp * 1000; // Convert from seconds to milliseconds
+                localStorage.setItem('tokenExpiration', String(expirationTime)); // Store expiration time
+
+                navigate('/');
+                window.location.reload();
               
           }
           catch(error){

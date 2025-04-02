@@ -1,4 +1,4 @@
-import React, {useState} from "react"
+import React, {useState, useEffect } from "react"
 import axios from "axios";
 import { useNavigate } from 'react-router-dom';
 
@@ -12,6 +12,10 @@ function Register () {
         email: "",
         password1: "",
         password2: "",
+    })
+    const [loginData, setLoginData] = useState({
+        email: "",
+        password: "",
     })
     const handleChange = (e:any) => {
         setFormData({
@@ -28,6 +32,13 @@ function Register () {
             setError("Unknown error")
           }
     }
+    useEffect(() => {
+        setLoginData({
+            email: formData.email,
+            password: formData.password1
+        })
+    },[formData]);
+
     const handleSubmit = async (e:any) => {
         e.preventDefault();
         if (isLoading) {
@@ -36,20 +47,41 @@ function Register () {
         setIsLoading(true)
         setError(null);
         axios({
-            url: "http://localhost:8000/api/register/",
+            url: `${import.meta.env.VITE_BACKEND_URL}/api/register/`,
             method: "POST",
             data: formData
         })
         .then(response => {
             console.log('New user registered:', response.data) 
+
+            const loginAfterRegister = async () => {
+                try{
+                    const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/login/`, loginData)
+                    console.log("Success login!", response.data)
+                    localStorage.setItem("accessToken", response.data.tokens.access);
+                    localStorage.setItem("refreshToken", response.data.tokens.refresh)
+                    localStorage.setItem("showInstr", "true");
+                    navigate('/');
+                    window.location.reload();
+                    
+                }
+                catch(error){
+                console.log("error catching")
+                handleAxiosError(error)
+                console.error(error)
+                }
+            }
+            loginAfterRegister();
         })
         .catch((Error) => {
             console.log("error catching")
             handleAxiosError(Error)
             console.error(Error)
         })
+        
         setIsLoading(false)
-        navigate("/login")
+        
+        
 
     }
     return (

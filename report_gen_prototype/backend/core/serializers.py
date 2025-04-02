@@ -54,12 +54,13 @@ class AgentSerializer(serializers.ModelSerializer):
 
 class ReportSerializer(serializers.ModelSerializer):
     lead_name = serializers.CharField(source='lead.name', read_only=True)
+    username = serializers.CharField(source='user.username', read_only=True)
     context = PaperSerializer(many=True)
     potential_agents = AgentSerializer(many=True)
     chosen_team = AgentSerializer(many=True)
     class Meta:
         model = Report
-        fields = ('name','date','task','expectations','context','cycles','report_guidelines','method','temperature','engine', 'model', 'lead_name', 'potential_agents', 'chosen_team', 'output', 'chat_log')
+        fields = ('name','date','task','expectations','context','cycles','report_guidelines','method','temperature','engine', 'model', 'lead_name', 'potential_agents', 'chosen_team', 'output', 'chat_log', 'username', 'saved_to_lead')
 
 class TeamLeadSerializer(serializers.ModelSerializer):
     reports = ReportSerializer(many=True, read_only=True)

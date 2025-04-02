@@ -18,6 +18,8 @@ from core.chatbot_functionality.Agent import ollama_engine
 from core.chatbot_functionality.run_meeting import run_meeting
 from datetime import datetime
 import shutil
+from django.forms.models import model_to_dict
+
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import status
 from django.conf import settings
@@ -119,7 +121,7 @@ class AgentView(viewsets.ModelViewSet):
             
             try:
                 agent = Agent.objects.get(user=user, name=agent_name)
-            except TeamLead.DoesNotExist:
+            except Agent.DoesNotExist:
                 return Response({"error": "Agent not found for this user."}, status=status.HTTP_404_NOT_FOUND)
 
             agent.stored_papers.clear()
@@ -309,6 +311,7 @@ class PaperView(viewsets.ModelViewSet):
 
 class TeamLeadView(viewsets.ModelViewSet):
     serializer_class = TeamLeadSerializer
+    permission_classes = [IsAuthenticated]
     def get_queryset(self):
         user = self.request.user
         return TeamLead.objects.filter(user=user)
@@ -378,20 +381,21 @@ class TeamLeadView(viewsets.ModelViewSet):
 
             lead.save()
             return Response({"Lead created"})
+        
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
 
-def generate_report(request):
-    res = run_meeting("test_pot_again4")
-    print(res)
-    return JsonResponse({"status": "success", "data": res})
-#saves the report in "output" to the lead
 
+@api_view(["POST"])
 def save_report_memory(request, name):
     if request.method == 'POST':
-        report_inst = Report.objects.filter(name=name)
+        report_inst = Report.objects.get(name=name, user = request.user)
         report_text = ""
-        with open(report_inst.output, 'r') as file:
+        with open(report_inst.output.path, 'r') as file:
             report_text = file.read()
-        report_inst.output
+            print("Report text:", report_text)
+        report_inst.saved_to_lead = True
+        report_inst.save()
         lead = report_inst.lead
         lead_kb_path = lead.kb_path
         lead_kb = KnowledgeBase.from_path(lead_kb_path)
@@ -402,12 +406,13 @@ def save_report_memory(request, name):
             length_function=len,
             is_separator_regex=False,
         )
-
+        report_text = [report_text]
         lead_kb.upload_knowledge_1(text= report_text, source_name= report_inst.name, chunker = chunker)
         return JsonResponse({'message': f'report saved in lead kb'})
 
 
 class ReportView(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
     serializer_class = ReportSerializer
     def get_queryset(self):
         user = self.request.user
@@ -446,11 +451,11 @@ class ReportView(viewsets.ModelViewSet):
             user = request.user
             report_name = kwargs.get("pk")
             try:
-                report = TeamLead.objects.get(user=user, name=report_name)
+                report = Report.objects.get(user=user, name=report_name)
             except Report.DoesNotExist:
                 return Response({"error": "Report not found for this user."}, status=status.HTTP_404_NOT_FOUND)
 
-            report_path = os.path.join(settings.MEDIA_ROOT, user.username, "reports", "report_" + report.name + ".txt")
+            report_path = os.path.join(settings.MEDIA_ROOT, user.username, "output", "report_" + report.name + ".txt")
             chat_path = os.path.join(settings.MEDIA_ROOT, user.username, "report_logs", "chatlog_" + report.name + ".txt")
             os.remove(report_path)
             os.remove(chat_path)
@@ -458,9 +463,8 @@ class ReportView(viewsets.ModelViewSet):
             return Response({"message": "Report successfully deleted"}, status = status.HTTP_204_NO_CONTENT)
             
         
-
     def create(self, request, *args, **kwargs):
-        #with transaction.atomic():
+        with transaction.atomic():
             name = request.data.get('name')
             user = request.user
             username = request.user.username
@@ -472,7 +476,7 @@ class ReportView(viewsets.ModelViewSet):
             task = request.data.get('task')
             expectations = request.data.get('expectations')
             model = request.data.get('model')
-            cycles = request.data.get('cycles')
+            cycles = int(request.data.get('cycles'))
             reportGuidelines = request.data.get('reportGuidelines')
             method = int(request.data.get('method'))
             temperature = float(request.data.get('temperature'))
@@ -482,6 +486,9 @@ class ReportView(viewsets.ModelViewSet):
             files = request.FILES.getlist('context_files')
             selFiles = request.POST.getlist('selFiles')
             selAgents = request.POST.getlist('selAgents')
+            draw_from_knowledge = False
+            
+
             report = Report(
                 name = name,
                 date = date,
@@ -494,40 +501,63 @@ class ReportView(viewsets.ModelViewSet):
                 temperature = temperature,
                 engine = engine,
                 lead = lead_obj,
-                user = user
+                user = user,
+                saved_to_lead = False
                 
             )
+            params = {"name": name, 
+                      "date": date, 
+                      "task": task, 
+                      "expectations": expectations,
+                      "model": model, 
+                      "cycles": cycles,
+                      "report_guidelines": reportGuidelines,
+                      "method": method,
+                      "temperature": temperature,
+                      "engine": engine,
+                      "lead_path": lead_obj.kb_path,
+                      "draw_from_knowledge": draw_from_knowledge,
+                      "user": username
+                      }
             report.save()
             report = Report.objects.get(name=report.name, user = user)
             #selAgents setting
+            potential_agents = []
             if selAgents[0] == "all":
                 all_agents = Agent.objects.filter(user=user)
                 report.potential_agents.add(*all_agents)
+                potential_agents = list(Agent.objects.filter(user=user).values())
             else:
                 for agent_name in selAgents:
                     agent_ref = Agent.objects.get(name=agent_name, user = user) 
                     report.potential_agents.add(agent_ref)
-            
+                    potential_agents.append(model_to_dict(agent_ref))
+            params["potential_agents"] = potential_agents
             
             papers = []
+            paper_names = []
             print("savig report papers")
             for file in files:
+                print(file)
                 if ("text" or "pdf" not in file.content_type):
+                    print("why failing?")
                     return JsonResponse({"error": "File not a text file"}, status=400) 
-                
+                print("c1")
                 file_type = os.path.splitext(file.name)[1]
                 file_type = file_type.lstrip(".")
                 paper = Paper(file = file, name = file.name, file_type = file_type, user = user)
-                
+                print("c2")
                 if (Paper.objects.filter(name= file.name, user = user).exists()):
                     print("FILE ALR EXISTS")
                     return JsonResponse({"error": "Paper file already exists."}, status=400)
-
+                print("c3")
                 paper.save()
                 papers.append(paper)
+                print("c4")
+                
 
             print("Papers created")
-
+            
 
             #connect keys of papers in selFiles to report obj
 
@@ -535,14 +565,17 @@ class ReportView(viewsets.ModelViewSet):
                 paper_ref = Paper.objects.get(name=paper_name, user = user) 
                 print("Paper ref:", paper_ref)
                 report.context.add(paper_ref)
+                paper_names.append(paper_name)
             
             for paper in papers:
                 report.context.add(paper)
+                paper_names.append(paper.name)
 
+            params["context"] = paper_names
             #Time to actually run the code to create a report!
             #Get the context papers
             try:
-                report_output = run_meeting(id = report.name)
+                report_output = run_meeting(params)
                 print("meeting ran through")
                 report_text = report_output["final_report"]
                 chat_log = report_output["chat_log"]

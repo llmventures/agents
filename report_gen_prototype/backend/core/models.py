@@ -68,3 +68,4 @@ class Report(models.Model):
     output = models.FileField(upload_to=report_upload, null=True, blank=True)
     chat_log = models.FileField(upload_to=log_upload, null=True, blank=True)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='reports_user')
+    saved_to_lead = models.BooleanField()

@@ -1,29 +1,25 @@
 import LeadForm from "../components/LeadForm";
 import React, { useState, useEffect } from 'react';
 import axios from "axios";
+import api from "../components/api"
 
 function Leads () {
     const [name, setName] = useState('')
     const [description, setDescription] = useState('')
     const [leads, setLeads] = useState<any[]>([])
     const [error, setError] = useState<string | null>(null);
-    const accessToken = localStorage.getItem("accessToken");
 
     useEffect(() => {
-        axios({
-            url: "http://localhost:8000/api/leads/",
-            method: "GET",
-            headers: {
-                "Authorization":`Bearer ${accessToken}`
+        const getLeads = async() => {
+            try {
+                const response = await api.get('/leads/')
+                setLeads(response.data)
             }
-        })
-        .then((response:any) => {
-            setLeads(response.data)
-            //console.log(leads)
-        })
-        .catch((error:any) => {
-            console.log('Error fetching team leads', error.response)
-        })
+            catch (error: any) {
+                console.log('Error fetching team leads', error.response)
+            }
+        }
+       getLeads();
     })
     
     const formSubmit = (event: React.FormEvent) => {
@@ -35,29 +31,24 @@ function Leads () {
         }
 
         setError(null);
-        axios({
-            url: "http://localhost:8000/api/leads/",
-            method: "POST",
-            headers: {
-                "Authorization":`Bearer ${accessToken}`
-            },
-            data: lead
-        })
-        .then(response => {
-            console.log('New lead created:', response.data)
-            setLeads([...leads, response.data]);
-            
-        })
-        .catch((Error) => {
-            if (Error.response.data.error == "Lead name already exists.") {
-                setError("Lead name already exists. Choose a different one.")
-                console.error('Error creating new lead');
+        const createLead = async() => {
+            try {
+                const response = await api.post('/leads', lead)
+                console.log('New lead created:', response.data)
+                setLeads([...leads, response.data]);
             }
-            else {
-                setError("Error:" + Error.response.data.error)
-                console.error(Error.response)
+            catch (error: any) {
+                if (error.response.data.error == "Lead name already exists.") {
+                    setError("Lead name already exists. Choose a different one.")
+                    console.error('Error creating new lead');
+                }
+                else {
+                    setError("Error:" + error.response.data.error)
+                    console.error(error.response)
+                }
             }
-        })
+        }
+        createLead();
         setName('')
         setDescription('')
     }
