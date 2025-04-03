@@ -6,7 +6,8 @@ from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import IsAuthenticated, AllowAny
 import os
-from django.http import HttpResponse, JsonResponse
+import json
+from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from django.core.files.base import ContentFile
 from django.shortcuts import get_object_or_404
@@ -19,6 +20,7 @@ from core.chatbot_functionality.run_meeting import run_meeting
 from datetime import datetime
 import shutil
 from django.forms.models import model_to_dict
+from pdfminer.high_level import extract_text
 
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import status
@@ -157,14 +159,17 @@ class AgentView(viewsets.ModelViewSet):
             papers = []
             
             for file in files:
-                
                 file_type = os.path.splitext(file.name)[1]
+                
                 file_type = file_type.lstrip(".")
+                print("FILE TYPE:", file_type)
+                if ("text" not in file_type and "pdf" not in file_type):
+                    print("no text/pdf")
+                    return JsonResponse({"error": "File is not pdf/text. Is of type {file_type}"}, status=400)
                 paper = Paper(file = file, name = file.name, file_type = file_type, user=user)
                 #checking if same name paper alr exists
 
                 if (Paper.objects.filter(name= file.name, user=user).exists()):
-                    print("FILE ALR EXISTS")
                     return JsonResponse({"error": "File already exists for this user."}, status=400)
                 
                 paper.save()
@@ -208,6 +213,9 @@ class AgentView(viewsets.ModelViewSet):
                     with open(file_path, 'r') as file:
                         file_content = file.read()
 
+                if paper_ref.file_type == "pdf":
+                    file_content = extract_text(file_path)
+                print("file content: ", file_content)
                 #chunkers expect a list, not enclosing text in list yields 1 char chunks
                 file_content = [file_content]
                 agent_knowledge.upload_knowledge_1(text= file_content, source_name= paper_name, chunker = chunker)
@@ -221,6 +229,9 @@ class AgentView(viewsets.ModelViewSet):
                 if paper.file_type == "txt":
                     with open(file_path, 'r') as file:
                         file_content = file.read()
+                        
+                if paper.file_type == "pdf":
+                    file_content = extract_text(file_path)
                 print("Text to be embedded:", file_content)
                 paper_name = paper.name
                 file_content = [file_content]
@@ -464,6 +475,7 @@ class ReportView(viewsets.ModelViewSet):
             
         
     def create(self, request, *args, **kwargs):
+        print("endpoint accessed")
         with transaction.atomic():
             name = request.data.get('name')
             user = request.user
@@ -575,27 +587,37 @@ class ReportView(viewsets.ModelViewSet):
             #Time to actually run the code to create a report!
             #Get the context papers
             try:
-                report_output = run_meeting(params)
-                print("meeting ran through")
-                report_text = report_output["final_report"]
-                chat_log = report_output["chat_log"]
-                worker_team = report_output["worker_team"]
-                report_name = f"report_{report.name}.txt"
-                chatlog_name = f"chatlog_{report.name}.txt"
-                report.output.save(report_name, ContentFile(report_text))
-                report.chat_log.save(chatlog_name, ContentFile(chat_log))
-                print("files saved")
-                #map agents to the report
-                #UNCOMMENT AFTER TESTING
-                print("assigned fields")
-                for i in worker_team:
-                    agent_ref = Agent.objects.get(name=i, user = user)
-                    report.chosen_team.add(agent_ref)
-                
-        
-                serializer = ReportSerializer(report, context={"request": request})
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
+                def stream():
+                    
+                    print("starting to stream")
+                    report_output = None
+                    for update in run_meeting(params):
+                        if report_output is not None:
+                            yield report_output
+                        report_output = update
+                        
+                     
+                    report_text = report_output["final_report"]
+                    chat_log = report_output["chat_log"]
+                    worker_team = report_output["worker_team"]
+                    report_name = f"report_{report.name}.txt"
+                    chatlog_name = f"chatlog_{report.name}.txt"
+                    report.output.save(report_name, ContentFile(report_text))
+                    report.chat_log.save(chatlog_name, ContentFile(chat_log))
+                    #map agents to the report
+                    for i in worker_team:
+                        agent_ref = Agent.objects.get(name=i, user = user)
+                        report.chosen_team.add(agent_ref)
+                        
+                    yield json.dumps("END") + '\n'
             
+
+                response = StreamingHttpResponse(stream(), content_type="application/json")
+                response['Cache-Control'] = 'no-cache'
+                return response
+
+
+
             except Exception as e:
                 report.delete()
                 return JsonResponse({"error": e}, status=400) 

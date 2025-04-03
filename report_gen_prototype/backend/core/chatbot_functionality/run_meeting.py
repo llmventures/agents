@@ -1,5 +1,6 @@
 from pydantic import BaseModel
-
+import time
+import json
 
 class ChosenAgent(BaseModel):
     agent_name: str
@@ -79,7 +80,7 @@ def run_meeting(params):
     setup_conversation = Conversation(setup_team, engine)
     agents_map = {}
 
-
+    yield json.dumps(["PROGRESS", "SETUP"]) + "\n"
     #Get agents: From all agents defined within the django db. 
     agents_data = params["potential_agents"]
 
@@ -95,7 +96,6 @@ def run_meeting(params):
     #Agents map: contains information on all POSSIBLE agents that could be chosen
     #Generate team's context: consists of objectives, guiding questions, and rules
     agents_info = "\n\n".join(f"{name}: \n{agent.to_string()}" for name, agent in agents_map.items())
-    print(agents_info)
     
     choose_agents_prompt = f"""You have been given this task by your director: {task}. 
     Given the following information on possible agents to choose from: 
@@ -113,6 +113,7 @@ def run_meeting(params):
     choose_agents_format = ChosenAgents
     #Have project lead generate a team until a valid team is reached. If after 3 iterations
     valid_team = False
+    yield json.dumps(["PROGRESS", "CHOOSETEAM"]) + "\n"
     while valid_team == False:
         valid_team = True
         setup_conversation = Conversation(setup_team, engine)
@@ -127,36 +128,38 @@ def run_meeting(params):
         for i in parsed_output:
             if i not in agents_list:
                 valid_team = False
-            
+    yield json.dumps(["TEAM", parsed_output]) + "\n"
     #Worker team is a team consisting of the chosen agents
     worker_team = {key: agents_map[key] for key in parsed_output if key in agents_map}
     
     #Combine setup team and worker team
     team = worker_team | setup_team
-
-    #generate guiding questions
-    guiding_questions_prompt = f"Generate a list of general guiding questions based on the task. These questions should guide team members"
-    guiding_questions = setup_conversation.convo_prompt("ProjectLead", prompt=guiding_questions_prompt,return_response=True, draw_from_knowledge=False)
-    print(f"Guiding questions generated: \n{guiding_questions}\n\n")
+    time.sleep(0.5)
     for agent_name, agent in worker_team.items():
         #Set engine and goals.
         agent.set_engine(engine)
+        yield json.dumps(["PROGRESS", "GENGOAL", agent_name]) + '\n'
         agent_goal = setup_conversation.convo_prompt("ProjectLead", 
                                                           prompt=f"For the agent {agent_name}, come up with a goal for it within the context of the task. Limit this goal to two sentences maximum.",
                                                           draw_from_knowledge=False, return_response=True
                                                           )
-        print(f"Generating goals for agent {agent_name}: \n{agent_goal}")
+        yield json.dumps(["GOAL", agent_name, agent_goal]) + '\n'
+        time.sleep(0.1)
         agent.set_goal(agent_goal)
     
     #Giving lead agent knowledge of all other agents:
     team_info = "\n\n".join(f"{name}: \n{agent.to_string()}" for name, agent in worker_team.items())
     lead_agent.set_additional_context(f"Team info: \n{team_info}")
 
+
+    yield json.dumps(["PROGRESS", "GUIDINGQ"]) + "\n"
+    #generate guiding questions
+    guiding_questions_prompt = f"Generate at most 4 general guiding questions based on the task. These questions should guide team members."
+    guiding_questions = setup_conversation.convo_prompt("ProjectLead", prompt=guiding_questions_prompt,return_response=True, draw_from_knowledge=False)
+    yield json.dumps(["GUIDINGQ", guiding_questions]) + '\n'
+    
     #init report generation convo object
     conversation = Conversation(team, engine)
-    print("______________________________________________________")
-    print("STARTING CONVERSATION")
-    print("______________________________________________________")
 
     #Guiding prompt contains info all agents share about project objectives
     #method 2: conversation.
@@ -207,7 +210,6 @@ def run_meeting(params):
             tasks_dict[i.agent_name] = i.task
         tasks_dict["All tasks"] = output.group_tasks
         
-        print("tasks dict:", tasks_dict)
         #Each agent has a separate conversation to ensure responses are not affected by
         #non area expertise information
         conversations = {name: Conversation({name: agent, "Analyst":analyst_agent}, engine) for name, agent in worker_team.items()}
@@ -231,7 +233,7 @@ def run_meeting(params):
                         prompt = f"Agent {agent_key}, address the task given to you by the ProjectLead here: {agent_task}. Keep the main task and conversation expectations in mind, but your main goal is the one given to you by project lead."
                 else:
                     prompt = f"Agent {agent_key}, address the task given to you by the ProjectLead here: {agent_task}. Keep the main task and conversation expectations in mind, but your main goal is the one given to you by project lead.Remember to take any critique from the critic into mind in your response."
-
+                #yield("CONVO_PROMPT:", prompt)
                 
                 
                 log = agent_convo.convo_prompt(agent_key, prompt, return_log = True, return_response = False, draw_from_knowledge=True)
@@ -239,6 +241,7 @@ def run_meeting(params):
 
                 #At the last cycle, have the agent summarize it's findings into text.
                 if (i == cycles-1):
+                    yield(f"Agent {agent_key} summarizing final results")
                     summarize_prompt = f"Agent {agent_key}: given your chat history above, summarize your findings into a report to be delivered to the lead agent. Ensure that the report clearly completes the task, how you came to the conclusion, and any other notes the lead should take into consideration when it compiles it's final report. Make sure the report is well formatted, and easy to understand for someone without your expertise."
                     summarize_report = agent_convo.convo_prompt(agent_key, summarize_prompt, return_response=True, return_log=False,draw_from_knowledge=False)
                     agent_log = f"{agent_key}:\nTask:{agent_task}\nFinal response: {summarize_report}\n"
@@ -278,7 +281,9 @@ def run_meeting(params):
         #os.system('cls' if os.name == 'nt' else 'clear')
                 
     if (method == 2):     
-        print("team conversations")       
+        time.sleep(0.1)
+        yield json.dumps(["PROGRESS", "STARTCONVO"]) + '\n'
+        time.sleep(0.25)
         start_prompt = f"""
         This is the context for a team meeting to discuss the following task:
         {task}
@@ -299,11 +304,16 @@ def run_meeting(params):
         if (draw_from_knowledge == True):
             start_prompt += "Also draw from the following relevant memories: "
         
-        output=conversation.convo_prompt(agent_name = "ProjectLead", prompt = start_prompt, return_log=True, return_response=False, draw_from_knowledge=draw_from_knowledge)
-        print(output)
+        
+        output=conversation.convo_prompt(agent_name = "ProjectLead", prompt = start_prompt, return_log=False, return_response=True, draw_from_knowledge=draw_from_knowledge)
+        yield json.dumps(["RESPONSE", "lead", output]) + '\n'
+        time.sleep(0.1)
         for i in range(cycles):
+            yield json.dumps(["CYCLE", i]) + '\n'
             #For each cycle: for each agent, provides it's thoughts given it's expertise.
             for agent_key in worker_team:
+                time.sleep(0.1)
+                yield json.dumps(["CONV_PROGRESS", f"agent {agent_key} responding"]) + '\n'
                 critique = ""
                 if (i != 0):
                     critique = "Remember to take any critique from the critic into mind in your response."
@@ -315,23 +325,28 @@ def run_meeting(params):
                     Remember that you can and should (politely) disagree with other team members if you have a different perspective.
                     Alternatively, if you do not have anything new or relevant to add, you may say "pass".
                     {critique}"""
+                
                 response, log = conversation.convo_prompt(agent_name=agent_key, prompt=agent_prompt, return_response = True, return_log=True,draw_from_knowledge=draw_from_knowledge)
+                yield json.dumps(["RESPONSE", agent_key, response]) + '\n'
                 print(log)
             
             #end of one cycle
+            yield json.dumps(["CONV_PROGRESS", "critic analyzing chat log"]) + '\n'
             critic_prompt = f"""Critic: Read through the chat log, and suggest improvements that directly address the agenda and any agenda questions. 
         Prioritize simple solutions over unnecessarily complex ones, but demand more detail where detail is lacking. 
         Additionally, validate whether the answer strictly adheres to the agenda and any agenda questions and provide corrective feedback if it does not. 
         Only provide feedback; do not implement the answer yourself.
         Your critique should be formatted clearly, with each agent addressed individually by name.
         """
-            critic_log = conversation.convo_prompt(agent_name="Analyst", prompt=critic_prompt, return_log=True, return_response=False, draw_from_knowledge=False)
-            print(critic_log)
+            critic_response = conversation.convo_prompt(agent_name="Analyst", prompt=critic_prompt, return_log=False, return_response=True, draw_from_knowledge=False)
+            yield json.dumps(["RESPONSE", "critic", critic_response]) + '\n'
             post_round_lead_prompt = f"""This concludes round {i+1} of {cycles} rounds of discussion. Lead, synthesize the points raised by each team member, make decisions regarding the agenda based on team member input, and ask follow-up questions to gather more information and feedback about how to better address the agenda"""
-            
-            log_entry = conversation.convo_prompt(agent_name="ProjectLead",prompt=post_round_lead_prompt, return_log=True, return_response=False, draw_from_knowledge=False)
-            print(log_entry)
-        print("CONVERSATION END")
+            yield json.dumps(["CONV_PROGRESS", "lead synthesizing points"]) + '\n'
+            lead_response = conversation.convo_prompt(agent_name="ProjectLead",prompt=post_round_lead_prompt, return_log=False, return_response=True, draw_from_knowledge=False)
+            yield json.dumps(["RESPONSE", "lead", lead_response]) + '\n'
+
+        time.sleep(0.1)
+        yield json.dumps(["CONV_PROGRESS", "conversation over, generating report"]) + '\n'
         concluding_prompt = f"Lead: given the conersation that has taken place, summarize your findings into a report that follows the guidelines:"
         f"{report_guidelines}"
         f"Ensure the report clearly delivers on the main task. As a reminder, the task was {task}. Further, ensure the report must follow any specifics described in the expectations: {expectations}"
@@ -348,7 +363,7 @@ def run_meeting(params):
 
     chat_log = ''.join(conversation.chat_log)
 
-    return {"final_report": final_report, "worker_team": parsed_output, "chat_log": chat_log}
+    yield {"final_report": final_report, "worker_team": parsed_output, "chat_log": chat_log}
 
     #Post processing: convert final report into a file, save new info(agents used, report)
     #into django report entry
