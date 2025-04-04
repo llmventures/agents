@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+.loading {
+    font-size: 20px; /* Increase text size */
+    color: gray; /* Change text color */
+  }
+  
+  .loading:after {
+    overflow: hidden;
+    display: inline-block;
+    vertical-align: bottom;
+    -webkit-animation: ellipsis steps(5, end) 900ms infinite; /* Increase steps for more dots */
+    animation: ellipsis steps(5, end) 900ms infinite;
+    content: "....."; /* More dots */
+    width: 0px;
+  }
+  
+  @keyframes ellipsis {
+    to {
+      width: 50px; /* Adjust width based on number of dots */
+    }
+  }
+  
+  @-webkit-keyframes ellipsis {
+    to {
+      width: 50px;
+    }
+  }

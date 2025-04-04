@@ -47,7 +47,7 @@ export default function Layout({ children, ...props }: Props) {
                     return
                 }
                 
-                const response = await api.get("http://localhost:8000/api/user/");
+                const response = await api.get("/user/");
                 
                 setLoggedIn(true)
                 setUsername(response.data.username)

@@ -19,13 +19,18 @@ function Login () {
         })
     }
     const handleAxiosError = (error:any) => {
-        if (error.response && error.response.data) {
+        //check if network error
+        if (error.message === "Network Error") {
+            setError("Network error: backend is down.")
+        }
+        else if (error.response && error.response.data) {
             const firstErrorField:any = Object.keys(error.response.data)[0];
             const firstError:any = Object.values(error.response.data).flat()[0]; 
             setError(firstErrorField + ":" + firstError)
-          } else {
+          } 
+        else {
             setError("Unknown error")
-          }
+        }
     }
     const handleNav = () => {
         navigate('/register');

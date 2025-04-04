@@ -143,7 +143,7 @@ WSGI_APPLICATION = 'reportsite.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.{}' .format(
-            os.getenv('DATABASE_ENGINE', 'sqlite3')
+            os.getenv('DATABASE_ENGINE', 'postgresql')
         ),
         'NAME': os.getenv('DATABASE_NAME', 'db.sqlite3'),
         'USER': os.getenv('DATABASE_USERNAME', 'reportsiteuser'),

@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:8000/api',
+  baseURL: `${import.meta.env.VITE_BACKEND_URL}/api`,
 });
 
 // Function to refresh token
@@ -10,7 +10,7 @@ async function refreshToken() {
     const refresh = localStorage.getItem('refreshToken');
     if (!refresh) throw new Error("No refresh token available");
 
-    const response = await axios.post('http://localhost:8000/api/token/refresh/', { refresh });
+    const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/token/refresh/`, { refresh });
     console.log("Token refreshed");
 
     const newAccessToken = response.data.access;

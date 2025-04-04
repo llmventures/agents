@@ -209,15 +209,12 @@ function ReportForm({name, task, onSelectFileChange, onSelectAgentChange, expect
             <select 
             className="form-select"
             onChange={onLeadChange}
-            
+            required
             >
-            <option selected>Choose lead</option>
+            <option selected value="">Choose lead</option>
             {leadsList.map((cur_lead) => (
                 <option value={cur_lead.name}>{cur_lead.name} </option>
             ))}
-            
-            
-            required
             </select>
            
         </div>

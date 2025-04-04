@@ -43,6 +43,7 @@ function ReportPage() {
     useEffect(() => {
         const getReport = async() => {
             try {
+                
                 const response = await api.get(`/reports/${name}/`)
                 setChatLog(response.data.chat_log)
                 setContext(response.data.context)

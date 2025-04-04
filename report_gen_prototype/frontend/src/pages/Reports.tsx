@@ -21,9 +21,8 @@ function Reports () {
     useEffect(() => {
         const getReports = async() => {
             try {
-                const response = await api.get('/report/')
+                const response = await api.get('/reports/')
                 setReports(response.data)
-                console.log(reports)
             }
             catch (error: any) {
                 console.log('Error fetching reports', error.response)
@@ -50,7 +49,6 @@ function Reports () {
                     </a>
                 </div>
                 <div className = "p-2 flex-fill bd-highlight">
-                <button type="button" className="btn btn-danger" onClick={() => deleteClicked(report.id)}>Delete</button>
                 </div>
 
             </div>

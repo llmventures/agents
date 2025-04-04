@@ -58,7 +58,7 @@ function Papers () {
         setError(null);
 
         axios({
-            url: "http://localhost:8000/api/papers/",
+            url: `${import.meta.env.VITE_BACKEND_URL}/api/papers/`,
             method: "POST",
             headers: {
                 "Authorization":`Bearer ${accessToken}`

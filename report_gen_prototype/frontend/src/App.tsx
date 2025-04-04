@@ -12,6 +12,7 @@ import Logout from './pages/Logout'
 import Register from './pages/Register'
 import Reports from './pages/Reports'
 import ReportPage from './pages/ReportPage'
+import "./App.css"
 
 function App() {
   
