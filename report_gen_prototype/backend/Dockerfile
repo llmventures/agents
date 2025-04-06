@@ -34,7 +34,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 RUN echo "Listing contents of /usr/:" && ls -al /usr/
 # Stage 2: Production stage
-FROM python:3.11-slim
+FROM python:3.11-slim AS production
  
 RUN useradd -m -r appuser && \
    mkdir /app && \
@@ -60,9 +60,3 @@ USER appuser
  
 # Expose the application port
 EXPOSE 8000 
-
-# Make entry file executable
-RUN chmod +x  /app/entrypoint.prod.sh
- 
-# Start the application using Gunicorn
-CMD ["/app/entrypoint.prod.sh"]

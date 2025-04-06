@@ -1,5 +1,4 @@
-import axios from "axios";
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useParams } from "react-router";
 import { Link } from 'react-router-dom';
@@ -11,8 +10,8 @@ function ReportPage() {
     const { name } = useParams()
     const [chat_log, setChatLog] = useState()
     const [context, setContext] = useState<any[]>([]) 
-    const [cycles, setCycles] = useState() 
-    const [date, setDate] = useState()
+    //const [cycles, setCycles] = useState() 
+    //const [date, setDate] = useState()
     const [engine, setEngine] = useState()
     const [expectations, setExpectation] = useState()
     const [lead_name, setLeadName] = useState()
@@ -21,17 +20,16 @@ function ReportPage() {
     const [output, setOutput] = useState()
     //const [potentialAgents, setPotentialAgents] = useState()
     const [task, setTask] = useState()
-    const [temperature, setTemp] = useState()
+    //const [temperature, setTemp] = useState()
     const [chosenTeam, setChosenTeam] = useState<any[]>([])
     const [savedToLead, setSavedToLead] = useState<boolean>()
-    const accessToken = localStorage.getItem("accessToken");
     const [isLoading, setLoadStatus] = useState<boolean>(false)
     const [error, setError] = useState<string | null>(null);
 
     const saveReportMemory = async (reportId:any) => {
         setLoadStatus(true)
         try {
-            const response = await api.post(`/save_report_memory/${reportId}/`)
+            await api.post(`/save_report_memory/${reportId}/`)
             setSavedToLead(true)
             setLoadStatus(false)
         }
@@ -47,16 +45,16 @@ function ReportPage() {
                 const response = await api.get(`/reports/${name}/`)
                 setChatLog(response.data.chat_log)
                 setContext(response.data.context)
-                setCycles(response.data.cycles)
-                setTemp(response.data.temperature)
+                //setCycles(response.data.cycles)
+                //setTemp(response.data.temperature)
                 setTask(response.data.task)
                 setOutput(response.data.output)
                 setModel(response.data.model)
                 setLeadName(response.data.lead_name)
                 setExpectation(response.data.expectations)
-                setCycles(response.data.cycles)
+                //setCycles(response.data.cycles)
                 setEngine(response.data.engine)
-                setDate(response.data.date)
+                //setDate(response.data.date)
                 setSavedToLead(response.data.savedToLead)
                 setChosenTeam(response.data.chosen_team)
             }
@@ -73,7 +71,7 @@ function ReportPage() {
     
     const deleteClicked = async () => {
         try {
-            const response = api.delete(`/reports/${name}/`)
+            api.delete(`/reports/${name}/`)
             navigate('/reports')
         }
         catch(error:any) {

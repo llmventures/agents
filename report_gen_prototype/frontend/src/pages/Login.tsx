@@ -1,12 +1,11 @@
-import React, {useState} from "react"
+import {useState} from "react"
 import axios from "axios";
-import { Navigate, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 
 function Login () {
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false)
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
         email: "",

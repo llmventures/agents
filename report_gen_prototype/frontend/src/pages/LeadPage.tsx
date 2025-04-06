@@ -1,6 +1,5 @@
 import { useParams } from "react-router";
-import axios from "axios";
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import api from '../components/api'
@@ -10,7 +9,7 @@ function LeadPage() {
     const navigate = useNavigate();
     const deleteClicked = async () => {
         try {
-            const response = api.delete(`/leads/${name}/`)
+            api.delete(`/leads/${name}/`)
             navigate('/leads')
         }
         catch (error: any) {

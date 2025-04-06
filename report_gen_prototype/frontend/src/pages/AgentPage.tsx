@@ -1,9 +1,7 @@
-import axios from "axios";
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useParams } from "react-router";
 import api from "../components/api"
-import { Link } from 'react-router-dom';
 
 
 function AgentPage() {
@@ -11,7 +9,6 @@ function AgentPage() {
     const [role, setRole] = useState('')
     const [expertise, setExpertise] = useState('')
     const [files, setFiles] = useState<any[]>([]) 
-    const accessToken = localStorage.getItem("accessToken");
     useEffect(() => {
         const getAgents = async () => {
             try {
@@ -30,7 +27,7 @@ function AgentPage() {
     const navigate = useNavigate();
     const deleteClicked = async () => {
         try {
-            const response = await api.delete(`agents/${name}/`)
+            await api.delete(`agents/${name}/`)
             navigate('/agents')
         }
         catch (error: any) {

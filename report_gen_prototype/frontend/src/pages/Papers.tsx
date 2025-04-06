@@ -12,7 +12,7 @@ function Papers () {
     const accessToken = localStorage.getItem("accessToken");
     const deleteClicked = async(id:any) => {
         try {
-            const response = api.delete(`/papers/${id}/`)
+            api.delete(`/papers/${id}/`)
             setReload(reload + 1)
         }
         catch (error:any) {
@@ -47,8 +47,6 @@ function Papers () {
             return;
         }
         event.preventDefault();
-        const now = new Date();
-        const dateTime = now.toLocaleString();
 
         const formData = new FormData();
 
@@ -86,13 +84,26 @@ function Papers () {
         setSelectedFile(null)
     }
     return (
+        
         <div>
-            <h3>Upload a new paper</h3>
-            <PaperForm 
-            file = {selectedFile}
-            onFileChange={onFileChange}
-            onSubmit={formSubmit}
-            />
+        {error && (
+            <div className="alert alert-danger alert-dismissible fade show" role="alert">
+            {error}
+            <button
+                type="button"
+                className="btn-close"
+                data-bs-dismiss="alert"
+                aria-label="Close"
+                onClick={() => setError(null)}
+            ></button>
+            </div>
+        )}
+        <h3>Upload a new paper</h3>
+        <PaperForm 
+        file = {selectedFile}
+        onFileChange={onFileChange}
+        onSubmit={formSubmit}
+        />
 
         <h3>Current papers</h3>
         <div className="list-group">

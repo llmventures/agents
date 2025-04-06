@@ -1,17 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import axios from "axios";
+import { useState, useEffect } from 'react';
 import { useLocation } from "react-router-dom"
 import { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Loader from '../components/Loader'
 import api from '../components/api'
 
 function ReportOutputPage () {
     const navigate = useNavigate();
     const bottomRef = useRef<HTMLDivElement>(null)
-    const [status, setStatus] = useState("");  
     const [curGenerating, setCurGenerating] = useState<string>("")
-    const [curChunk, setCurChunk] = useState("");
     const [moveOn, setMoveOn] = useState<boolean>(false)
     const [chosenTeam, setChosenTeam] = useState([])
     const [guidingQ, setGuidingQ] = useState([])
@@ -23,19 +19,19 @@ function ReportOutputPage () {
     const location = useLocation();
     const subData = location.state || {};
     const [name, setName] = useState(subData.name || '')
-    const [task, setTask] = useState(subData.task || '')
-    const [description, setDescription] = useState(subData.description || '')
-    const [expectations, setExpectations] = useState(subData.expectations || '')
-    const [model, setModel] = useState(subData.model || '')
-    const [context, setContext] = useState<File[]>(subData.context || []);
-    const [cycles, setCycles] = useState(subData.cycles || '');
-    const [reportGuidelines, setReportGuidelines] = useState(subData.reportGuidelines || '');
-    const [method, setMethod] = useState('2');
-    const [temp, setTemp] = useState(subData.temp || '');
-    const [engine, setEngine] = useState(subData.engine || '')
-    const [lead, setLead] = useState(subData.lead || '');
-    const [selectedInDBFiles, setSelectedInDBFiles] = useState<string[]>(subData.selectedInDBFiles || [])
-    const [selectedAgents, setSelectedAgents] = useState<string[]>(subData.selectedAgents || [])
+    const [task] = useState(subData.task || '')
+    const [description] = useState(subData.description || '')
+    const [expectations] = useState(subData.expectations || '')
+    const [model] = useState(subData.model || '')
+    const [context] = useState<File[]>(subData.context || []);
+    const [cycles] = useState(subData.cycles || '');
+    const [reportGuidelines] = useState(subData.reportGuidelines || '');
+    const [method] = useState('2');
+    const [temp] = useState(subData.temp || '');
+    const [engine] = useState(subData.engine || '')
+    const [lead] = useState(subData.lead || '');
+    const [selectedInDBFiles] = useState<string[]>(subData.selectedInDBFiles || [])
+    const [selectedAgents] = useState<string[]>(subData.selectedAgents || [])
     
 
 
@@ -43,9 +39,6 @@ function ReportOutputPage () {
     const [isLoading, setLoadStatus] = useState<boolean>(false)
     const [report, setReport] = useState<any>(null)
     const [error, setError] = useState<string | null>(null);
-    const accessToken = localStorage.getItem("accessToken");
-    const [isLoggedIn, setLoggedIn] = useState<boolean | null>(false)
-    const [username, setUsername] = useState("")
 
     const scrollToBottom = () => {
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -54,22 +47,16 @@ function ReportOutputPage () {
         try {
             const token = localStorage.getItem("accessToken");
             if (!token) {
-                setLoggedIn(false)
                 if (location.pathname !== "/register") {
                     navigate("/login");
                 }
                 return
             }
 
-            const response = await api.get("/user/");
-            
-            setLoggedIn(true)
-            setUsername(response.data.username)
+            await api.get("/user/");
             //navigate("/")
         }
         catch(error) {
-            setLoggedIn(false)
-            setUsername("")
             if (location.pathname !== "/register") {
                 navigate("/login");
             }
@@ -79,7 +66,7 @@ function ReportOutputPage () {
     
     const deleteReport = async(id:any) => {
         try {
-            const response = await api.delete(`/reports/${id}`)
+            await api.delete(`/reports/${id}`)
             setDeleteDisabled(true)
             console.log("navigating")
             navigate("/", 
@@ -122,7 +109,7 @@ function ReportOutputPage () {
     const saveReportMemory = async (reportId:any) => {
         setLoadStatus(true)
         try {
-            const response = await api.post(`save_report_memory/${reportId}/`)
+            await api.post(`save_report_memory/${reportId}/`)
             setSavedToLead(true)
             setLoadStatus(false)
         }
@@ -215,7 +202,6 @@ function ReportOutputPage () {
                                 }
                                 else {
                                     setCurGenerating(parsedChunk[1])
-                                    setStatus(parsedChunk[1])
                                 }
                             }
                             if (responseType === "CYCLE") {
@@ -249,7 +235,6 @@ function ReportOutputPage () {
             } 
             catch (error:any) {
                 console.error("Error generating the report:", error);
-                setStatus("Failed to generate the report.");
                 console.log("error catching")
                 console.error(Error)
                 setLoadStatus(false)

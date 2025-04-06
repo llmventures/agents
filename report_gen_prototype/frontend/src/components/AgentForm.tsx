@@ -1,4 +1,3 @@
-import React, { useState, useEffect, Component } from 'react';
 import MultiselectPapers from './MultiselectPapers';
   
 interface AgentFormProps {
@@ -13,7 +12,7 @@ interface AgentFormProps {
     onSelectFileChange: (names: string[]) => void;
     onSubmit: (e: React.FormEvent) => void;
 }
-function LeadForm({name, role, expertise, uploadedFiles, onNameChange, onRoleChange, onExpertiseChange,onSelectFileChange, onFileChange, onSubmit}: AgentFormProps) {    
+function LeadForm({name, role, expertise, onNameChange, onRoleChange, onExpertiseChange,onSelectFileChange, onFileChange, onSubmit}: AgentFormProps) {    
 
     return (
         <form onSubmit={onSubmit}>

@@ -1,6 +1,5 @@
 import LeadForm from "../components/LeadForm";
 import React, { useState, useEffect } from 'react';
-import axios from "axios";
 import api from "../components/api"
 
 function Leads () {
@@ -33,7 +32,7 @@ function Leads () {
         setError(null);
         const createLead = async() => {
             try {
-                const response = await api.post('/leads', lead)
+                const response = await api.post('/leads/', lead)
                 console.log('New lead created:', response.data)
                 setLeads([...leads, response.data]);
             }

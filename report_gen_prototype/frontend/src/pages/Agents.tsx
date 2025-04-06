@@ -1,7 +1,5 @@
 import AgentForm from "../components/AgentForm";
 import React, { useState, useEffect } from 'react';
-import axios from "axios";
-import UploadPapers from "../components/UploadPaper";
 import Loader from "../components/Loader"
 import api from '../components/api'
 //Multi file upload: files should be a list of files
@@ -33,7 +31,6 @@ function Agents () {
     //strings to the options param?
     //Then there would be no need to unpack here either
     const [agents, setAgents] = useState<any[]>([])
-    const accessToken = localStorage.getItem("accessToken");
 
     useEffect(() => {
         const getAgents = async () => {

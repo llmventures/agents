@@ -1,5 +1,4 @@
-import React, { useState, useEffect, Component } from 'react';
-import axios from "axios";
+import React, { useState, useEffect } from 'react';
 import MultiselectPapers from './MultiselectPapers';
 import MultiselectAgents from './MultiselectAgents';
 import api from '../components/api'
@@ -44,7 +43,7 @@ interface ReportFormProps {
     onLeadChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
     onSubmit: (e: React.FormEvent) => void;
 }
-function ReportForm({name, task, onSelectFileChange, onSelectAgentChange, expectations, description,reportGuidelines, uploadedFiles, cycles, method, temperature, engine, model, lead, onFilesChange, onMethodChange,onNameChange, onTaskChange, onLeadChange,onCyclesChange, onExpectationsChange, onEngineChange, onReportGuidelinesChange, onModelChange, onDescriptionChange, onTemperatureChange,onSubmit}: ReportFormProps) {
+function ReportForm({name, task, onSelectFileChange, onSelectAgentChange, expectations, description,reportGuidelines, uploadedFiles, cycles, temperature, onFilesChange,onNameChange, onTaskChange, onLeadChange,onCyclesChange, onExpectationsChange, onEngineChange, onReportGuidelinesChange, onModelChange, onDescriptionChange, onTemperatureChange,onSubmit}: ReportFormProps) {
     const [leadsList, setLeadsList] = useState<any[]>([])
     useEffect(() => {
         const getLeads = async() => {

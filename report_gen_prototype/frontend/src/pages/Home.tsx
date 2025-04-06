@@ -1,14 +1,11 @@
 
-import React, { useState, useEffect, Component } from 'react';
+import React, { useState, useEffect } from 'react';
 import ReportForm from "../components/ReportForm"
 import { useNavigate } from 'react-router-dom';
 import { useLocation } from "react-router-dom"
 import Instructions from "../components/Instructions"
 
-function Home () {
-    //message is placeholder, rperesenting USER SPEC data
-    const [message, setMessage] = useState('')
-    
+function Home () {    
     const location = useLocation();
     const initData = location.state ?? {};
 
@@ -28,7 +25,7 @@ function Home () {
     const [selectedInDBFiles, setSelectedInDBFiles] = useState<string[]>(initData.selectedInDBFiles || [])
     const [selectedAgents, setSelectedAgents] = useState<string[]>(initData.selectedAgents || [])
     const [error, setError] = useState<string | null>(null);
-    const [showInstr, setShowInstr] = useState<boolean>(() => {
+    const [showInstr] = useState<boolean>(() => {
         return localStorage.getItem("showInstr") === "true";
       });
     console.log(showInstr)

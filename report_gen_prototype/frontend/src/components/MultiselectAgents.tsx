@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import axios from "axios";
 import Select from 'react-select';
 import api from './api'
 type OptionType = {
@@ -13,10 +12,8 @@ type MultiSelectAgentsProps = {
 
 const MultiselectPapers: React.FC<MultiSelectAgentsProps> =({passNamesToParent}) => {
     const [agentOptions, setOptions] = useState<OptionType[] | undefined>([])//Store options for multiselect
-    const [selectedAgents, setSelectedAgents] = useState<readonly OptionType[] | null>(null);
     
     const handleSelectAgentsChange = (selectedAgents: readonly OptionType[] | null) => {
-        setSelectedAgents(selectedAgents);
         const namesList = selectedAgents ? selectedAgents.map(file => file.value): [];
         passNamesToParent(namesList)
         

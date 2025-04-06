@@ -1,22 +1,9 @@
-import PaperForm from '../components/PaperForm';
-import React, { useState, useEffect } from 'react';
-import axios from "axios";
+import { useState, useEffect } from 'react';
 import api from "../components/api"
 
 function Reports () {
     const [reports, setReports] = useState<any[]>([])
     const [error, setError] = useState<string | null>(null);
-    const [reload, setReload] = useState<number>(0)
-    const accessToken = localStorage.getItem("accessToken");
-    const deleteClicked = async (id:any) => {
-        try {
-            const response = api.delete(`/reports/${id}/`)
-            setReload(reload + 1)
-        }
-        catch (error:any) {
-            console.log("error deleting report")
-        }
-    }
     
     useEffect(() => {
         const getReports = async() => {
@@ -34,7 +21,18 @@ function Reports () {
     
     return (
         <div>
-
+        {error && (
+            <div className="alert alert-danger alert-dismissible fade show" role="alert">
+            {error}
+            <button
+                type="button"
+                className="btn-close"
+                data-bs-dismiss="alert"
+                aria-label="Close"
+                onClick={() => setError(null)}
+            ></button>
+            </div>
+        )}
         <h3>Current reports</h3>
         <div className="list-group">
         {reports.map((report) => (

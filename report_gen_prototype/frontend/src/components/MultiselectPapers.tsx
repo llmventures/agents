@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import axios from "axios";
 import Select from 'react-select';
 import api from './api'
 type OptionType = {
@@ -13,10 +12,8 @@ type MultiSelectPapersProps = {
 
 const MultiselectPapers: React.FC<MultiSelectPapersProps> =({passNamesToParent}) => {
     const [papersOptions, setOptions] = useState<OptionType[] | undefined>([])//Store options for multiselect
-    const [selectedFiles, setSelectedFiles] = useState<readonly OptionType[] | null>(null);
     
     const handleSelectPapersChange = (selectedFiles: readonly OptionType[] | null) => {
-        setSelectedFiles(selectedFiles);
         const namesList = selectedFiles ? selectedFiles.map(file => file.value): [];
         passNamesToParent(namesList)
         
@@ -24,7 +21,6 @@ const MultiselectPapers: React.FC<MultiSelectPapersProps> =({passNamesToParent})
         
     }
     useEffect(() => {
-        const accessToken = localStorage.getItem("accessToken");
         const getPapers = async() => {
             try {
                 const response = await api.get('/papers/')

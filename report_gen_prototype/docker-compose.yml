@@ -1,0 +1,48 @@
+services:
+  db:
+    image: postgres:17
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    env_file:
+      - ./backend/.env.prod
+
+  django-web:
+    build: 
+      context: ./backend
+      target: production
+    container_name: django-docker
+    depends_on:
+      - db
+    volumes:
+      - ./backend/static:/app/staticfiles
+    env_file:
+      - ./backend/.env.prod
+    command: >
+      bash -c "
+        python3 manage.py collectstatic --noinput &&
+        python3 manage.py migrate --noinput &&
+        gunicorn --bind 0.0.0.0:8000 --workers 3 reportsite.wsgi:application
+      "
+
+  frontend:
+    build: 
+      context: ./frontend
+      target: production
+    container_name: react-docker
+    depends_on:
+      - django-web
+  
+  frontend-proxy:
+    image: nginx:latest
+    ports:
+      - "8001:80"
+    volumes:
+      - ./frontend/nginx/default.conf:/etc/nginx/nginx.conf:ro
+      - ./backend/static:/static:ro
+      - ./frontend/distr:/usr/share/nginx/html:ro
+    depends_on:
+      - django-web
+volumes:
+  postgres_data:
