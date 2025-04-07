@@ -52,8 +52,9 @@ services:
     ports:
       - "8001:80"
     volumes:
-      - ./frontend/nginx/default.conf:/etc/nginx/nginx.conf:ro
+      - ./frontend/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./backend/static:/static:ro
+      - ./frontend/nginx/default.conf:/etc/nginx/conf.d/default.conf
       #- ./frontend/distr:/usr/share/nginx/html:ro
     depends_on:
       - django-web
