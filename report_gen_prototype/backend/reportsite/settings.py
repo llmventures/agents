@@ -15,7 +15,7 @@ import os
 from datetime import timedelta
 from dotenv import load_dotenv
 
-load_dotenv('.env.local')
+load_dotenv('.env.prod')
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.

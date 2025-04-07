@@ -1,3 +1,4 @@
+version: "3"
 services:
   db:
     image: postgres:17
@@ -7,6 +8,8 @@ services:
       - postgres_data:/var/lib/postgresql/data
     env_file:
       - ./backend/.env.prod
+    networks:
+      - app-network
 
   django-web:
     build: 
@@ -19,20 +22,30 @@ services:
       - ./backend/static:/app/staticfiles
     env_file:
       - ./backend/.env.prod
+    networks:
+      - app-network
     command: >
       bash -c "
         python3 manage.py collectstatic --noinput &&
         python3 manage.py migrate --noinput &&
         gunicorn --bind 0.0.0.0:8000 --workers 3 reportsite.wsgi:application
       "
+    
 
   frontend:
     build: 
       context: ./frontend
       target: production
     container_name: react-docker
+    environment:
+      NODE_ENV: production
+    ports:
+      - 80:80
+    networks:
+      - app-network
     depends_on:
       - django-web
+
   
   frontend-proxy:
     image: nginx:latest
@@ -41,8 +54,17 @@ services:
     volumes:
       - ./frontend/nginx/default.conf:/etc/nginx/nginx.conf:ro
       - ./backend/static:/static:ro
-      - ./frontend/distr:/usr/share/nginx/html:ro
+      #- ./frontend/distr:/usr/share/nginx/html:ro
     depends_on:
       - django-web
+      - frontend
+    networks:
+      - app-network
+    command: >
+      bash -c "until curl -s http://django-web:8000; do echo 'Waiting for Django...'; sleep 1; done && nginx -g 'daemon off;'"
 volumes:
   postgres_data:
+
+networks:
+  app-network:
+    driver: bridge
