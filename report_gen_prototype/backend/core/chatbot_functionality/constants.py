@@ -1,10 +1,12 @@
-from .Agent import ollama_engine, Agent
+from .Agent import Agent
+from .Engine import ollama_engine, openai_engine
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 ollama_engine_mistral = ollama_engine("mistral")
-engines_dict = {"Ollama_mistral": lambda: ollama_engine_mistral}
+openai_gpt4o = openai_engine("gpt-4o")
+engines_dict = {"Ollama_mistral": lambda: ollama_engine_mistral, "openai_gpt-4o": lambda: openai_gpt4o}
 
 HFembedder = HuggingFaceEmbeddings()
 embedders_dict = {"HuggingFaceEmbeddings": HFembedder}

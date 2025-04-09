@@ -10,12 +10,8 @@ import json
 from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from django.core.files.base import ContentFile
-from django.shortcuts import get_object_or_404
-from langchain_huggingface import HuggingFaceEmbeddings
 from django.db import transaction
 from core.chatbot_functionality.KnowledgeBase import KnowledgeBase
-from core.chatbot_functionality.constants import recursive_chunker
-from core.chatbot_functionality.Agent import ollama_engine
 from core.chatbot_functionality.run_meeting import run_meeting
 from datetime import datetime
 import shutil
@@ -163,7 +159,7 @@ class AgentView(viewsets.ModelViewSet):
                 
                 file_type = file_type.lstrip(".")
                 print("FILE TYPE:", file_type)
-                if ("text" not in file_type and "pdf" not in file_type):
+                if ("txt" not in file_type and "pdf" not in file_type):
                     print("no text/pdf")
                     return JsonResponse({"error": "File is not pdf/text. Is of type {file_type}"}, status=400)
                 paper = Paper(file = file, name = file.name, file_type = file_type, user=user)
@@ -278,6 +274,9 @@ class PaperView(viewsets.ModelViewSet):
             file_type = os.path.splitext(name)[1]
             file_type = file_type.lstrip(".")
             print(file_type)
+            if ("txt" not in file_type and "pdf" not in file_type):
+                    print("no text/pdf")
+                    return JsonResponse({"error": "File is not pdf/text. Is of type {file_type}"}, status=400)
             paper = Paper(
                 file = file,
                 file_type = file_type,
@@ -548,17 +547,14 @@ class ReportView(viewsets.ModelViewSet):
             
             papers = []
             paper_names = []
-            print("savig report papers")
             for file in files:
                 print(file)
-                if ("text" or "pdf" not in file.content_type):
+                if ("txt" or "pdf" not in file.content_type):
                     print("why failing?")
                     return JsonResponse({"error": "File not a text file"}, status=400) 
-                print("c1")
                 file_type = os.path.splitext(file.name)[1]
                 file_type = file_type.lstrip(".")
                 paper = Paper(file = file, name = file.name, file_type = file_type, user = user)
-                print("c2")
                 if (Paper.objects.filter(name= file.name, user = user).exists()):
                     print("FILE ALR EXISTS")
                     return JsonResponse({"error": "Paper file already exists."}, status=400)
@@ -591,25 +587,34 @@ class ReportView(viewsets.ModelViewSet):
                     
                     print("starting to stream")
                     report_output = None
-                    for update in run_meeting(params):
-                        if report_output is not None:
-                            yield report_output
-                        report_output = update
-                        
+                    try:
+                        for update in run_meeting(params):
+                            if report_output is not None:
+                                yield report_output
+                            report_output = update
+                    
                      
-                    report_text = report_output["final_report"]
-                    chat_log = report_output["chat_log"]
-                    worker_team = report_output["worker_team"]
-                    report_name = f"report_{report.name}.txt"
-                    chatlog_name = f"chatlog_{report.name}.txt"
-                    report.output.save(report_name, ContentFile(report_text))
-                    report.chat_log.save(chatlog_name, ContentFile(chat_log))
-                    #map agents to the report
-                    for i in worker_team:
-                        agent_ref = Agent.objects.get(name=i, user = user)
-                        report.chosen_team.add(agent_ref)
+                        report_text = report_output["final_report"]
+                        chat_log = report_output["chat_log"]
+                        worker_team = report_output["worker_team"]
+                        report_name = f"report_{report.name}.txt"
+                        chatlog_name = f"chatlog_{report.name}.txt"
+                        report.output.save(report_name, ContentFile(report_text))
+                        report.chat_log.save(chatlog_name, ContentFile(chat_log))
+                        #map agents to the report
+                        for i in worker_team:
+                            agent_ref = Agent.objects.get(name=i, user = user)
+                            report.chosen_team.add(agent_ref)
                         
-                    yield json.dumps("END") + '\n'
+                        yield json.dumps("END") + '\n'
+                    except Exception as e:
+                        error_response = {
+                            "status": "error",
+                            "message": str(e)
+                        }
+                        yield json.dumps(error_response) + '\n'
+                        
+
             
 
                 response = StreamingHttpResponse(stream(), content_type="application/json")

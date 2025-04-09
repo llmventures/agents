@@ -179,26 +179,26 @@ function ReportForm({name, task, onSelectFileChange, onSelectAgentChange, expect
         </div>
         */}
         <div className="select">
-            <label htmlFor="method" className="form-label">Engine (leave blank for ollama)</label>
+            <label htmlFor="method" className="form-label">Engine (leave blank for openai)</label>
             <select 
             className="form-select"
             onChange={onEngineChange}
             >
             <option selected>Choose engine</option>
-            <option value="Ollama">Ollama </option>
-            
+            <option value="Ollama" disabled>Ollama </option>
+            <option value="openai">OpenAI </option>
             </select>
            
         </div>
         <div className="select">
-            <label htmlFor="method" className="form-label">Model (leave blank for mistral)</label>
+            <label htmlFor="method" className="form-label">Model (leave blank for gpt4o)</label>
             <select 
             className="form-select"
             onChange={onModelChange}
             >
             <option selected>Choose model</option>
-            <option value="mistral">Ollama: mistral </option>
-            
+            <option value="mistral" disabled>Ollama: mistral </option>
+            <option value="gpt-4o">gpt-4o</option>
             </select>
            
         </div>

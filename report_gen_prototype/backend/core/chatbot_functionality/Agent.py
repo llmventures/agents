@@ -38,6 +38,7 @@ class Conversation:
         if (agent_name in self.team):
 
             agent = self.team[agent_name]
+            print("ANSWERING WITH FORMAT", format)
             response = agent.answer_query(prompt, str_log, self.engine, query_kb = draw_from_knowledge, vectors = 3, debug_log = False, format=format)
             log_entry = self.add_to_log(agent_name, prompt, response)
             if (return_response == True and return_log == True):
@@ -126,40 +127,3 @@ class Agent:
 
         return output#, relevant_knowledge, timestamp
 
-
-#Defines a ollama engine.
-class ollama_engine:
-    def __init__(self, model):
-        self.model = model
-        self.chat_log = []
-
-    def to_string(self):
-        print("Ollama", self.model)
-    #Generates a one time answer to a query(response not stored)
-    def generate(self, query, format):
-        ollama.pull(self.model)
-        if format == {}:
-            response = ollama.generate(model=self.model, prompt=query)
-            reply = response['response']
-        else:
-            response = ollama.generate(model=self.model, prompt=query, format=format.model_json_schema())
-            reply = format.model_validate_json(response['response'])
-        return reply
-   
-   
-   
-    #Generates an answer to a query. Stores the interaction in chat_log.
-    def chat(self, query):
-        ollama.pull(self.model)
-        response = ollama.chat(model=self.model, messages=self.chat_log + [{"role": "user", "content": query}])
-        
-        reply = response['message']['content']
-        
-        # Append the current interaction to the chat log
-        self.chat_log.append({"role": "user", "content": query})
-        self.chat_log.append({"role": "assistant", "content": reply})
-
-        return reply
-
-    def clear_chat(self):
-        self.chat_log = []

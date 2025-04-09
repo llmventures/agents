@@ -110,7 +110,47 @@ def run_meeting(params):
     Now provide your answer. 
     
     """
-    choose_agents_format = ChosenAgents
+    #janky way right now to handle very different methods for creating formatted json responses between openai and ollama
+    
+    if (engine_name == "Ollama"):
+        choose_agents_format = ChosenAgents
+    elif (engine_name == "openai"):
+        choose_agents_format = {
+        "format": {
+            "type": "json_schema",
+            "name": "choose_agents_list",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "agents": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "agent_name": {
+                                    "type": "string"
+                                },
+                                "reasoning": {
+                                    "type": "string"
+                                },
+                            }, "required": ["agent_name", "reasoning"],
+                            "additionalProperties": False
+
+                        }
+                    }
+                    
+                },
+                "required": ["agents"],
+                "additionalProperties": False
+            },
+            "strict": True
+        }
+    }
+    else:
+        print("unknown engine:", engine_name)
+
+
+
     #Have project lead generate a team until a valid team is reached. If after 3 iterations
     valid_team = False
     yield json.dumps(["PROGRESS", "CHOOSETEAM"]) + "\n"
@@ -121,7 +161,12 @@ def run_meeting(params):
         output, log_entry = setup_conversation.convo_prompt("ProjectLead", choose_agents_prompt, draw_from_knowledge = False, return_log=True, return_response=True, format= choose_agents_format)
         print("___________________________\nDECIDED AGENTS\n___________________________")
         #Parse response into list of agents that were chosen by the lead
-        parsed_output = [chosen_agent.agent_name for chosen_agent in output.agents]
+        if (engine_name == "ollama"):
+            parsed_output = [chosen_agent.agent_name for chosen_agent in output.agents]
+        elif (engine_name == "openai"):
+            [chosen_agent['agent_name'] for chosen_agent in output['agents']]
+        else:
+            return "error engine name"
         print(parsed_output)
         
         #check that worker team is valid
@@ -171,8 +216,8 @@ def run_meeting(params):
     #response after each cycle.
     #At end of each cycle, Lead agent injects some info about previous conversations(optionally)
     #At the end of all cycles, lead consolidates all information into a report.
-    
     if method == 1:
+        return
         print("Separate Agent conversations")
         start_prompt_format = AgentTasks
         start_prompt = f"""

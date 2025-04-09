@@ -6,7 +6,6 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from .constants import embedders_dict
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 import json
-#from .Agent import ollama_engine
 import faiss
 from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document

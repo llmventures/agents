@@ -131,7 +131,7 @@ function ReportOutputPage () {
         formData.append("task", task)
         formData.append("description", description)
         formData.append("expectations", expectations)
-        formData.append("model", model || "mistral");
+        formData.append("model", model || "gpt-4o");
         for (let i=0; i < context.length; i++) {
             formData.append("context_files", context[i])
         }
@@ -151,7 +151,7 @@ function ReportOutputPage () {
         formData.append("reportGuidelines", reportGuidelines)
         formData.append("method", method)
         formData.append("temperature", temp || '0.8')
-        formData.append("engine", engine || 'Ollama')
+        formData.append("engine", engine || 'openai')
         formData.append("lead", lead)
         console.log("FORM DATA")
         console.log([...formData.entries()])
@@ -189,9 +189,34 @@ function ReportOutputPage () {
                         console.log(`decoded chunk: ${decodedChunk}`)
                         const parsedChunk = JSON.parse(decodedChunk)
                         console.log(parsedChunk)
+                        if (parsedChunk.status == "error") {
+                            setError(parsedChunk.message)
+                            navigate("/", 
+                                { state: { 
+                                    name:name,
+                                    task: task,
+                                    description: description,
+                                    expectations: expectations,
+                                    model: model,
+                                    context: context,
+                                    selectedInDBFiles: selectedInDBFiles,
+                                    selectedAgents: selectedAgents,
+                                    cycles: cycles,
+                                    reportGuidelines: reportGuidelines,
+                                    method: method,
+                                    temp: temp,
+                                    engine: engine,
+                                    lead: lead,
+                                    error: parsedChunk.message
+                                } 
+                            });
+                            break;
+                        }
+
                         if (parsedChunk === "END") {
                             setCurGenerating("END")
                             break;
+                            
                         }
                         if (Array.isArray(parsedChunk)) {
                             //display logic
